@@ -192,6 +192,8 @@ def in_subspace() -> bool:
 
 async def check_locations(ctx: SSEContext) -> None:
     for loc in LOC_DATA_TABLE.values():
+        if loc.get("doubled", False):
+            continue
         checked = False
 
         if loc.location_type == LocationType.STAGE_COMPLETION:
@@ -204,8 +206,9 @@ async def check_locations(ctx: SSEContext) -> None:
         # others to be implemented
 
         if checked:
-            if loc.id is not None:
-                ctx.locations_checked.add(loc.id)
+            if loc.code is not None:
+                ctx.locations_checked.add(loc.code)
+                ctx.locations_checked.add(loc.code + 1000)
 
     locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
     if locations_checked:

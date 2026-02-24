@@ -1,6 +1,6 @@
 from typing import Optional
 from dataclasses import dataclass, field
-from BaseClasses import Location
+from BaseClasses import Location, Region
 from enum import Enum, auto
 
 from .Common import GAME_NAME, STAGES
@@ -22,7 +22,7 @@ class LocationType(Enum):
 @dataclass
 class SSELocationData:
     name: Optional[str] = None
-    id: Optional[int] = None
+    code: Optional[int] = None
 
     location_type: Optional[LocationType] = None
 
@@ -40,23 +40,29 @@ class SSELocation(Location):
         self,
         player: int,
         name: str = "",
-        id: Optional[int] = None,
+        code: Optional[int] = None,
+        parent: Optional[Region] = None,
         data: Optional[SSELocationData] = None,
     ):
-        if data is not None and data.id is not None and id is None:
-            id = data.id
-        if data is not None and data.name is not None and name is None:
-            name = data.name
+        if data is not None:
+            if data.name is None:
+                data.name = name
+            elif name is None:
+                name = data.name
+            if data.code is None:
+                data.code = code
+            elif code is None:
+                code = data.code
 
         assert name is not None, "location is missing name!"
 
-        super().__init__(self, player, name, id)
+        super().__init__(player, name, code, parent)
 
         self.data = data
 
 
-STAGE_COMPLETION_OFFSET = 0
-ORANGE_BOX_COMPLETION_OFFSET = 100
+STAGE_COMPLETION_OFFSET = 100
+ORANGE_BOX_COMPLETION_OFFSET = 200
 
 STAGE_COMPLETION_SUFFIX = " Completion"
 
@@ -64,7 +70,7 @@ STAGE_COMPLETION_LOC_DATA: dict[str, SSELocationData] = {
     stage.name
     + STAGE_COMPLETION_SUFFIX: SSELocationData(
         name=stage.name + STAGE_COMPLETION_SUFFIX,
-        id=stage.map_order + STAGE_COMPLETION_OFFSET,
+        code=stage.map_order + STAGE_COMPLETION_OFFSET,
         location_type=LocationType.STAGE_COMPLETION,
         other_info={"map_order": stage.map_order},
     )
@@ -73,4 +79,4 @@ STAGE_COMPLETION_LOC_DATA: dict[str, SSELocationData] = {
 
 LOC_DATA_TABLE = {**STAGE_COMPLETION_LOC_DATA}
 
-LOCATION_TABLE = {key: val.id for key, val in LOC_DATA_TABLE.items()}
+LOCATION_TABLE = {key: val.code for key, val in LOC_DATA_TABLE.items()}

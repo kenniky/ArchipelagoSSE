@@ -1,4 +1,5 @@
 from BaseClasses import Region
+from worlds.AutoWorld import World
 from .Common import STAGES
 from .Locations import (
     STAGE_COMPLETION_SUFFIX,
@@ -11,12 +12,12 @@ class SSELevel(Region):
     pass
 
 
-def create_regions(player: int, world):
+def create_regions(player: int, world: World):
     multiworld = world.multiworld
-    multiworld.regions.append(Region("Stage Select", player, world))
+    multiworld.regions.append(SSELevel("Stage Select", player, multiworld))
 
     for stage in STAGES:
-        level = SSELevel(stage.name, player, world)
+        level = SSELevel(stage.name, player, multiworld)
 
         # Stage clear locations
         level_completion_location = stage.name + STAGE_COMPLETION_SUFFIX
@@ -26,6 +27,7 @@ def create_regions(player: int, world):
             great_maze_clear = SSELocation(
                 player,
                 level_completion_location,
+                parent=level,
                 data=LOC_DATA_TABLE[level_completion_location],
             )
             great_maze_clear.place_locked_item(world.create_item("Defeat Tabuu"))
@@ -35,6 +37,7 @@ def create_regions(player: int, world):
                 SSELocation(
                     player,
                     level_completion_location,
+                    parent=level,
                     data=LOC_DATA_TABLE[level_completion_location],
                 )
             )

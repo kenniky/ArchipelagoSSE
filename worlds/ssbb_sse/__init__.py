@@ -8,6 +8,7 @@ from .Regions import create_regions
 from .Rules import set_rules
 from worlds.LauncherComponents import components, Component, Type, launch
 
+
 def run_client(*args: str) -> None:
     """
     Launch the Subspace Emissary client.
@@ -63,13 +64,13 @@ class SubspaceWorld(World):
         return super().generate_early()
 
     def create_regions(self) -> None:
-        create_regions(self.player, self.multiworld)
+        create_regions(self.player, self)
 
     def create_items(self) -> None:
         self.multiworld.itempool += [
             self.create_item(level_unlock)
             for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()
-            if level_unlock != "Midair Stadium Unlock"
+            if level_unlock not in ["Midair Stadium Unlock"]
         ]
 
         # Start with a stage
