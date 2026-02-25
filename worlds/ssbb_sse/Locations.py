@@ -39,24 +39,12 @@ class SSELocation(Location):
     def __init__(
         self,
         player: int,
-        name: str = "",
-        code: Optional[int] = None,
         parent: Optional[Region] = None,
         data: Optional[SSELocationData] = None,
     ):
-        if data is not None:
-            if data.name is None:
-                data.name = name
-            elif name is None:
-                name = data.name
-            if data.code is None:
-                data.code = code
-            elif code is None:
-                code = data.code
+        assert data is not None, "location is missing data!"
 
-        assert name is not None, "location is missing name!"
-
-        super().__init__(player, name, code, parent)
+        super().__init__(player, data.name, data.code, parent)
 
         self.data = data
 
@@ -70,7 +58,7 @@ STAGE_COMPLETION_LOC_DATA: dict[str, SSELocationData] = {
     stage.name
     + STAGE_COMPLETION_SUFFIX: SSELocationData(
         name=stage.name + STAGE_COMPLETION_SUFFIX,
-        code=stage.map_order + STAGE_COMPLETION_OFFSET,
+        code=None if stage.name == "The Great Maze" else stage.map_order + STAGE_COMPLETION_OFFSET,
         location_type=LocationType.STAGE_COMPLETION,
         other_info={"map_order": stage.map_order},
     )

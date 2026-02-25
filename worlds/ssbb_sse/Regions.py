@@ -26,7 +26,6 @@ def create_regions(player: int, world: World):
         if stage.name == "The Great Maze":
             great_maze_clear = SSELocation(
                 player,
-                level_completion_location,
                 parent=level,
                 data=LOC_DATA_TABLE[level_completion_location],
             )
@@ -36,7 +35,6 @@ def create_regions(player: int, world: World):
             level.locations.append(
                 SSELocation(
                     player,
-                    level_completion_location,
                     parent=level,
                     data=LOC_DATA_TABLE[level_completion_location],
                 )

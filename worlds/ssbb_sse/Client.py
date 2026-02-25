@@ -11,10 +11,11 @@ from typing import Optional, Any
 import asyncio
 from enum import Enum, auto
 
+from NetUtils import ClientStatus
 import Utils
 from .Locations import LOC_DATA_TABLE, LocationType
 from .Common import GAME_NAME, STAGES, get_map_order
-from .Items import ITEM_DATA_TABLE, SSEItemType
+from .Items import ITEM_DATA_TABLE, SSEItemType, ITEM_REVERSE_LOOKUP
 import dolphin_memory_engine
 
 CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load Super Smash Bros. Brawl. Trying again in 5 seconds..."
@@ -57,6 +58,8 @@ class SSEContext(CommonContext):
     command_processor = SSECommandProcessor
     game: str = GAME_NAME
 
+    items_handling: int = 0b111
+
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         """
         Initialize the SSE context.
@@ -72,10 +75,6 @@ class SSEContext(CommonContext):
 
         self.unlocked_stages: set[int] = set()
 
-        self.item_reverse_lookup: CommonContext.NameLookupDict = (
-            CommonContext.NameLookupDict(self, "item")
-        )
-
         # TODO: use
         self.has_send_death: bool = False
 
@@ -89,6 +88,12 @@ class SSEContext(CommonContext):
         # Trackers can request the dictionary from data storage to see which stages the player has visited.
         # It starts as `None` until it has been read from the server.
         self.visited_stage_names: Optional[set[str]] = None
+
+    async def server_auth(self, password_requested: bool = False):
+        if password_requested and not self.password:
+            await super().server_auth(password_requested)
+        await self.get_username()
+        await self.send_connect()
 
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         """
@@ -122,14 +127,14 @@ def read_byte(console_address: int) -> int:
     return int.from_bytes(dolphin_memory_engine.read_byte(console_address))
 
 
-def write_byte(console_address: int, value: int) -> None:
+def write_byte(console_address: int, hex_str: str) -> None:
     """
     Write a byte to Dolphin memory.
 
     :param console_address: Address to write to.
     :param value: Value to write.
     """
-    dolphin_memory_engine.write_byte(console_address, value.to_bytes())
+    dolphin_memory_engine.write_byte(console_address, hex_str)
 
 
 def read_word(console_address: int) -> int:
@@ -142,16 +147,14 @@ def read_word(console_address: int) -> int:
     return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, WORD_SIZE))
 
 
-def write_word(console_address: int, value: int) -> None:
+def write_word(console_address: int, hex_str: str) -> None:
     """
     Write a word (4 bytes) to Dolphin memory.
 
     :param console_address: Address to write to.
     :param value: Value to write.
     """
-    dolphin_memory_engine.write_byte(
-        console_address, value.to_bytes(WORD_SIZE, byteorder="big")
-    )
+    dolphin_memory_engine.write_bytes(console_address, bytes.fromhex(hex_str))
 
 
 def read_string(console_address: int, strlen: int) -> str:
@@ -191,9 +194,9 @@ def in_subspace() -> bool:
 
 
 async def check_locations(ctx: SSEContext) -> None:
+    if not in_subspace():
+        return
     for loc in LOC_DATA_TABLE.values():
-        if loc.get("doubled", False):
-            continue
         checked = False
 
         if loc.location_type == LocationType.STAGE_COMPLETION:
@@ -206,9 +209,12 @@ async def check_locations(ctx: SSEContext) -> None:
         # others to be implemented
 
         if checked:
+            if loc.name == "The Great Maze Completion":
+                if not ctx.finished_game:
+                    await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                    ctx.finished_game = True
             if loc.code is not None:
                 ctx.locations_checked.add(loc.code)
-                ctx.locations_checked.add(loc.code + 1000)
 
     locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
     if locations_checked:
@@ -216,28 +222,31 @@ async def check_locations(ctx: SSEContext) -> None:
 
 
 async def give_items(ctx: SSEContext) -> None:
-    if in_subspace():
-        for item in ctx.items_received:
-            item_data = ITEM_DATA_TABLE[ctx.item_reverse_lookup[item.item]]
+    for item in ctx.items_received:
+        item_data = ITEM_DATA_TABLE[ITEM_REVERSE_LOOKUP[item.item]]
 
-            if item_data.type == SSEItemType.STAGE_UNLOCK:
-                ctx.unlocked_stages.add(item_data.other_info["map_order"])
+        if item_data.type == SSEItemType.STAGE_UNLOCK:
+            ctx.unlocked_stages.add(item_data.other_info["map_order"])
 
 
 async def update_stage_unlocks(ctx: SSEContext) -> None:
+    if not in_subspace():
+        return
+
     for stage_data in STAGES:
         availability_addr = get_stage_data_addr(
             stage_data.map_order, StageDataEnum.AVAILABILITY
         )
         status_addr = get_stage_data_addr(stage_data.map_order, StageDataEnum.STATUS)
         if stage_data.map_order in ctx.unlocked_stages:
+            # print(availability_addr)
             # stage is unlocked
-            write_word(availability_addr, 0x00000000)
+            write_word(availability_addr, '00000000')
             if read_word(status_addr) == 0x00000000:
-                write_word(status_addr, 0x00000001)
+                write_word(status_addr, '00000001')
         else:
             # stage is not unlocked
-            write_word(availability_addr, 0x00000001)
+            write_word(availability_addr, '00000001')
 
 
 async def dolphin_sync_task(ctx: SSEContext) -> None:

@@ -73,5 +73,9 @@ ITEM_DATA_TABLE = {
 }
 
 ITEM_TABLE: dict[str, int] = {
-    name: data.code for name, data in ITEM_DATA_TABLE.items() if data.code is not None
+    name: data.code for name, data in ITEM_DATA_TABLE.items()
+}
+
+ITEM_REVERSE_LOOKUP: dict[int, str] = {
+    code: name for name, code in ITEM_TABLE.items() if code is not None
 }
