@@ -6,17 +6,21 @@ from .Locations import (
     SSELocation,
     LOC_DATA_TABLE,
 )
+from .Options import SSEOptions
 
 
 class SSELevel(Region):
     pass
 
 
-def create_regions(player: int, world: World):
+def create_regions(player: int, world: World, options: SSEOptions):
     multiworld = world.multiworld
     multiworld.regions.append(SSELevel("Stage Select", player, multiworld))
 
     for stage in STAGES:
+        if stage.name in options.stage_disable.value:
+            continue
+
         level = SSELevel(stage.name, player, multiworld)
 
         # Stage clear locations

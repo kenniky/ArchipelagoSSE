@@ -49,7 +49,7 @@ STAGE_UNLOCK_DATA_TABLE: dict[str, SSEItemData] = {
         classification=IC.progression,
         code=STAGE_UNLOCK_OFFSET + data.map_order,
         type=SSEItemType.STAGE_UNLOCK,
-        other_info={"map_order": data.map_order},
+        other_info={"map_order": data.map_order, "name": data.name},
     )
     for data in STAGES
 }

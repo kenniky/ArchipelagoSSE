@@ -90,6 +90,7 @@ class SSEContext(CommonContext):
         self.visited_stage_names: Optional[set[str]] = None
 
     async def server_auth(self, password_requested: bool = False):
+        # logger.info('authing')
         if password_requested and not self.password:
             await super().server_auth(password_requested)
         await self.get_username()

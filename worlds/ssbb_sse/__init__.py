@@ -2,10 +2,17 @@ from typing import ClassVar, FrozenSet
 from BaseClasses import Tutorial
 from worlds.AutoWorld import World, WebWorld
 from .Common import GAME_NAME
-from .Items import ITEM_TABLE, ITEM_DATA_TABLE, STAGE_UNLOCK_DATA_TABLE, SSEItem
+from .Items import (
+    ITEM_TABLE,
+    ITEM_DATA_TABLE,
+    STAGE_UNLOCK_DATA_TABLE,
+    STAGE_UNLOCK_SUFFIX,
+    SSEItem,
+)
 from .Locations import LOCATION_TABLE
 from .Regions import create_regions
 from .Rules import set_rules
+from .Options import SSEOptions
 from worlds.LauncherComponents import components, Component, Type, launch
 
 
@@ -50,6 +57,9 @@ class SubspaceWorld(World):
     topology_present = False  # Allows for location guides. implement when doors
     web: ClassVar[SubspaceWeb] = SubspaceWeb()
 
+    options_dataclass = SSEOptions
+    options: SSEOptions
+
     item_name_to_id: ClassVar[dict[str, int]] = ITEM_TABLE
     location_name_to_id: ClassVar[dict[str, int]] = LOCATION_TABLE
 
@@ -64,20 +74,28 @@ class SubspaceWorld(World):
         return super().generate_early()
 
     def create_regions(self) -> None:
-        create_regions(self.player, self)
+        create_regions(self.player, self, self.options)
 
     def create_items(self) -> None:
+        banned_stage_unlocks = [
+            "Midair Stadium Unlock",
+            *[
+                stage_name + STAGE_UNLOCK_SUFFIX
+                for stage_name in self.options.stage_disable.value
+            ],
+        ]
+
         self.multiworld.itempool += [
             self.create_item(level_unlock)
             for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()
-            if level_unlock not in ["Midair Stadium Unlock"]
+            if level_unlock not in banned_stage_unlocks
         ]
 
-        # Start with a stage
+        # Start with Midair Stadium
         self.push_precollected(self.create_item("Midair Stadium Unlock"))
 
     def set_rules(self) -> None:
-        set_rules(self.player, self.multiworld)
+        set_rules(self.player, self.multiworld, self.options)
 
     def create_item(self, name: str):
         data = ITEM_DATA_TABLE[name]
