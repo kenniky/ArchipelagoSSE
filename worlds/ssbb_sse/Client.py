@@ -275,6 +275,8 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
                 dolphin_memory_engine.is_hooked()
                 and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
             ):
+                if ctx.slot is None:
+                    await ctx.server_auth()
                 if not in_subspace():
                     # do nothing
                     sleep_time = 0.1
@@ -284,8 +286,6 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
                     await give_items(ctx)
                     await check_locations(ctx)
                     await update_stage_unlocks(ctx)
-                else:
-                    await ctx.server_auth()
                 sleep_time = 0.1
             else:
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
