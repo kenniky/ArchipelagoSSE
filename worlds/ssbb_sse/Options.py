@@ -6,7 +6,6 @@ from .Common import STAGES
 
 class StageDisables(OptionSet):
     """Disables some stages from being played.
-    Note that The Ruins is currently unstable due to the logic surrounding Pokemon Trainer.
     Levels with the same name are referred to with I and II suffixes (e.g. The Wilds I, The Wilds II)
     """
 
@@ -16,7 +15,7 @@ class StageDisables(OptionSet):
         for stage in STAGES
         if stage not in ["Midair Stadium", "The Great Maze"]
     ]
-    default = ["The Ruins"]
+    default = []
 
 
 @dataclass

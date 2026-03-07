@@ -4,7 +4,6 @@
 - Archipelago: https://github.com/ArchipelagoMW/Archipelago/releases
 - Subspace Emissary APWorld: https://github.com/kenniky/ArchipelagoSSE/releases
 - Super Smash Bros. Brawl USA ROM
-  - Development was done on a rev 2 ROM, but in the APWorld's current state I think the revision doesn't matter
 
 # Installing the APWorld
 
@@ -31,3 +30,7 @@ You can follow the [official instructions](https://archipelago.gg/tutorial/Archi
 Once the server is up, find the `Subspace Emissary Client` option in your Archipelago Launcher. Clicking on this will bring up a text client that will prompt you for the necessary server connection info. Once you're in, just boot up Dolphin with Super Smash Bros. Brawl, select The Subspace Emissary, and you're good to go!
 
 *Note: The Subspace Emissary APWorld does not currently require a patched ROM.*
+
+# Questions / Bugs
+
+Refer to the [FAQ](./faq.md), or ask in the thread on the Discord server.
