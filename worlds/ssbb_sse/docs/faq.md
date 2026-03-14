@@ -1,6 +1,6 @@
 # FAQ / Troubleshooting
 
-version: v0.1.0
+version: v0.1.1
 
 ### Is this safe to use in a multiworld?
 
