@@ -8,7 +8,7 @@ Yes, the build is currently mostly stable, just very barebones. Due to the natur
 
 ### What are my checks / items?
 
-The APWorld is currently a proof of concept. The only checks at the moment are level completions, and the only items are level unlocks. The APWorld is thus very linear, and singleplayer especially just becomes doing everything in a different order.
+[See here](./en_SubspaceEmissary.md#what-gets-randomized)
 
 ### Where should I go to start playing?
 
