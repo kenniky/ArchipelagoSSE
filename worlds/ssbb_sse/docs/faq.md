@@ -14,6 +14,16 @@ The APWorld is currently a proof of concept. The only checks at the moment are l
 
 When you've opened Brawl, navigate to the Subspace Emissary and create a new save file. Opening an existing save file will immediately send all the checks that that save file has completed... which I assume is not what you want.
 
+### I started in the Mario vs Kirby fight instead of the map, is that correct?
+
+Yes, that is currently how the game starts.
+
+### I picked up an orange cube, but I'm not getting a check for it!
+
+For some reason, the orange cube completion is not stored in memory (or at least, the part where I found it) until you have the ability to save. This means either going back to the map or a Great Maze save point.
+
+Note: If you've already completed the level, you can go back to map from the pause menu. You can also lose all your lives and go back to the map, and the completion will still be logged.
+
 ### Do I have to do the entire Great Maze?
 
 Yes, there is no workaround at the moment unfortunately.
@@ -21,10 +31,6 @@ Yes, there is no workaround at the moment unfortunately.
 ### I didn't get a patch file!
 
 The current version of the APWorld interacts directly with the vanilla version of Brawl, and patching is currently not needed.
-
-### I can't connect to the client, inputting my slot name does nothing
-
-This is a known bug where sometimes you will have to input your slot name twice. I haven't been able to consistently reproduce it, but it's on the list of things to look into.
 
 ### I entered a level and it glitched out for a second and then let me in while playing Mario.
 

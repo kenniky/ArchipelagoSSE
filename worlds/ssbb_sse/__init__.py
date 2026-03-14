@@ -1,13 +1,14 @@
 from typing import ClassVar, FrozenSet
 from BaseClasses import Tutorial
 from worlds.AutoWorld import World, WebWorld
-from .Common import GAME_NAME
+from .Common import GAME_NAME, STICKERS
 from .Items import (
     ITEM_TABLE,
     ITEM_DATA_TABLE,
-    STAGE_UNLOCK_DATA_TABLE,
-    STAGE_UNLOCK_SUFFIX,
     SSEItem,
+    populate_item_groups,
+    populate_items,
+    build_sticker_name,
 )
 from .Locations import LOCATION_TABLE
 from .Regions import create_regions
@@ -69,30 +70,18 @@ class SubspaceWorld(World):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        populate_item_groups(self)
+
     def generate_early(self):
         # placeholder
         return super().generate_early()
 
     def create_regions(self) -> None:
+        # Specific enabled/disabled logic goes here
         create_regions(self.player, self, self.options)
 
     def create_items(self) -> None:
-        banned_stage_unlocks = [
-            "Midair Stadium Unlock",
-            *[
-                stage_name + STAGE_UNLOCK_SUFFIX
-                for stage_name in self.options.stage_disable.value
-            ],
-        ]
-
-        self.multiworld.itempool += [
-            self.create_item(level_unlock)
-            for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()
-            if level_unlock not in banned_stage_unlocks
-        ]
-
-        # Start with Midair Stadium
-        self.push_precollected(self.create_item("Midair Stadium Unlock"))
+        populate_items(self)
 
     def set_rules(self) -> None:
         set_rules(self.player, self.multiworld, self.options)
@@ -104,4 +93,6 @@ class SubspaceWorld(World):
         return item
 
     def get_filler_item_name(self):
-        return "Filler Placeholder"
+        sticker_idx = self.random.randrange(len(STICKERS))
+        sticker_data = STICKERS[sticker_idx]
+        return build_sticker_name(sticker_data)
