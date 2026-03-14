@@ -60,7 +60,7 @@ def populate_items(subspace_world):
             item_pool.remove(item)
 
     # create filler items
-    total_locs = len(subspace_world.multiworld.get_locations(player))
+    total_locs = len(subspace_world.multiworld.get_unfilled_locations(player))
     created_items = len(item_pool)
     needed_items = total_locs - created_items
 
