@@ -50,7 +50,7 @@ class SSELocation(Location):
 
 
 def define_location_groups(subspace_world):
-    location_group_dict: Dict[str, Set[str]]
+    location_group_dict: Dict[str, Set[str]] = {}
 
     location_group_dict["Stage Completions"] = STAGE_COMPLETION_LOC_DATA.keys()
 
