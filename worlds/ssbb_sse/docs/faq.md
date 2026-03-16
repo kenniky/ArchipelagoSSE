@@ -36,6 +36,10 @@ The current version of the APWorld interacts directly with the vanilla version o
 
 This is a known bug that has something to do with how SSE stores character unlocks. Specifically, entering a level that doesn't have a starting cutscene without having the prerequisite characters available will cause it to do this and default to Mario. This is being investigated.
 
+### I defeated Charizard at the end of The Ruins and the screen went to black and won't progress.
+
+This is a known issue and has something to do with how Pokemon Trainer is handled. Specifically the game will freak out if you don't have Pokemon Trainer as a party member; because there is no starting cutscene to The Ruins, you have to have obtained Pokemon Trainer via a different level. This is a priority investigation
+
 ### I have an idea for what to add to the randomizer!
 
 You can discuss in the Subspace thread in the Archipelago server, but note that there is a basic roadmap planned out already and some of the more esoteric options are going to be lower priority (don't let that stop you from brainstorming things though).
