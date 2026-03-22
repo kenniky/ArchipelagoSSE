@@ -179,7 +179,7 @@ def write_byte(console_address: int, hex_str: str) -> None:
     :param console_address: Address to write to.
     :param value: Value to write.
     """
-    dolphin_memory_engine.write_byte(console_address, hex_str)
+    dolphin_memory_engine.write_byte(console_address, int(hex_str, 16))
 
 
 def read_bytes(console_address: int, num: int) -> int:
@@ -341,6 +341,13 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
     # needs to be constantly fired
     if not in_subspace():
         return
+    
+    # disable character get notifications
+    write_byte(0x9016E546, "F0")
+    write_byte(0x9016E545, "FF")
+    write_byte(0x9016E544, "FF")
+    write_byte(0x9016E54B, "FF")
+    write_byte(0x9016E54A, "FF")
 
     for stage_data in STAGES:
         availability_addr = get_stage_data_addr(
@@ -353,6 +360,12 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
             write_bytes(availability_addr, "00000000")
             if read_bytes(status_addr, WORD_SIZE) == 0x00000000:
                 write_bytes(status_addr, "00000001")
+            
+            # Patch PT in the Ruins, if not encountered yet
+            if stage_data.name == "The Ruins":
+                pt_byte = read_byte(0x90172740)
+                if pt_byte == 0x0:
+                    write_byte(0x90172740, "88")
         else:
             # stage is not unlocked
             write_bytes(availability_addr, "00000001")
