@@ -34,6 +34,8 @@ STAGE_SPACING = 0x00000014
 CURRENT_SEQUENCE_ADDR = 0x805B8BB0
 SEQ_SUBSPACE = 0x90FF3D40
 
+SCREEN_ID_ADDR = 0x90FF3D48
+
 
 class StageDataEnum(Enum):
     AVAILABILITY = auto()
@@ -243,7 +245,12 @@ def in_subspace() -> bool:
     try:
         curr_seq = read_bytes(CURRENT_SEQUENCE_ADDR, WORD_SIZE)
 
-        return curr_seq == SEQ_SUBSPACE
+        if curr_seq != SEQ_SUBSPACE:
+            return False
+
+        screen_id = read_bytes(SCREEN_ID_ADDR, WORD_SIZE)
+
+        return screen_id >= 0x06
     except:
         return False
 
