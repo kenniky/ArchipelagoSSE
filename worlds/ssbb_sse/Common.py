@@ -89,7 +89,7 @@ STAGES: list[StageData] = [
 
 # This also includes standing trophies that count similarly for clear %
 ORANGE_CUBES = [
-    OrangeCubeData("Skyworld", "Orange Cube on High Platform", "9016E50C", 2),
+    OrangeCubeData("Skyworld", "Orange Cube on High Platform", "9016E50C", 1),
     OrangeCubeData("The Jungle", "Orange Cube in Pit", "9016E513", 8),
     OrangeCubeData("The Jungle", "Trophy Behind Trackball Blocks", "9016E513", 7),
     OrangeCubeData("The Jungle", "Trophy by Rising Platform", "9016E513", 6),
