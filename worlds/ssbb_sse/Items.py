@@ -1,13 +1,14 @@
 from BaseClasses import Item, ItemClassification as IC
 from enum import Enum, auto
 from typing import Dict, NamedTuple, Optional, Set
-from .Common import GAME_NAME, STAGES, STICKERS, StickerData
+from .Common import GAME_NAME, STAGES, STICKERS, SUBSPACE_FIGHTS, StickerData
 
 
 class SSEItemType(Enum):
     STAGE_UNLOCK = auto()
     CHARACTER_UNLOCK = auto()
     STICKER = auto()
+    TABUU_DOOR = auto()
 
 
 class SSEItemData(NamedTuple):
@@ -49,9 +50,14 @@ def populate_items(subspace_world):
         for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()
     ]
 
+    item_pool += [
+        subspace_world.create_item(tabuu_door_unlock)
+        for tabuu_door_unlock in TABUU_DOOR_DATA_TABLE.keys()
+    ]
+
     # Start with Midair Stadium
     subspace_world.push_precollected(
-        subspace_world.create_item("Midair Stadium Unlock")
+        subspace_world.create_item(STAGE_UNLOCK_PREFIX + "Midair Stadium")
     )
 
     # Remove unique items that are precollected
@@ -87,13 +93,14 @@ def build_sticker_name(sticker_data: StickerData):
 STAGE_UNLOCK_OFFSET = 100
 CHAR_UNLOCK_OFFSET = 200
 MISC_OFFSET = 300
+TABUU_DOOR = 400
 STICKER_OFFSET = 1000
 
-STAGE_UNLOCK_SUFFIX = " Unlock"
+STAGE_UNLOCK_PREFIX = "Stage Unlock - "
 
 STAGE_UNLOCK_DATA_TABLE: dict[str, SSEItemData] = {
-    data.name
-    + STAGE_UNLOCK_SUFFIX: SSEItemData(
+    STAGE_UNLOCK_PREFIX
+    + data.name: SSEItemData(
         classification=IC.progression,
         code=STAGE_UNLOCK_OFFSET + data.map_order,
         type=SSEItemType.STAGE_UNLOCK,
@@ -114,6 +121,17 @@ STICKER_DATA_TABLE: dict[str, SSEItemData] = {
     for idx, data in enumerate(STICKERS)
 }
 
+TABUU_DOOR_DATA_TABLE: dict[str, SSEItemData] = {
+    "Tabuu Door Trophy Unlock - "
+    + data.fight: SSEItemData(
+        classification=IC.progression_skip_balancing,
+        code=TABUU_DOOR + idx,
+        type=SSEItemType.TABUU_DOOR,
+        other_info={"trigger_id": data.item_trigger_id},
+    )
+    for idx, data in enumerate(SUBSPACE_FIGHTS)
+}
+
 MISC_DATA_TABLE: dict[str, SSEItemData] = {
     "Filler Placeholder": SSEItemData(IC.filler, MISC_OFFSET + 0)
 }
@@ -126,6 +144,7 @@ EVENT_DATA_TABLE: dict[str, SSEItemData] = {
 ITEM_DATA_TABLE = {
     **STAGE_UNLOCK_DATA_TABLE,
     **CHAR_UNLOCK_DATA_TABLE,
+    **TABUU_DOOR_DATA_TABLE,
     **MISC_DATA_TABLE,
     **EVENT_DATA_TABLE,
     **STICKER_DATA_TABLE,

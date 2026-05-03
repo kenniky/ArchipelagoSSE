@@ -1,21 +1,22 @@
 # Handles logic
 from BaseClasses import MultiWorld
-from .Items import STAGE_UNLOCK_SUFFIX
+from rule_builder.rules import Has
+from worlds.AutoWorld import World
+from .Items import STAGE_UNLOCK_PREFIX
 from .Common import STAGES
 from .Options import SSEOptions
 
 
 # Rules apply even if the checks aren't included!
-def set_rules(player: int, multiworld: MultiWorld, options: SSEOptions):
+def set_rules(player: int, world: World, options: SSEOptions):
+    multiworld = world.multiworld
     stage_select = multiworld.get_region("Stage Select", player)
 
     for stage in STAGES:
-        def entrance_cond(state, stage):
-            return state.has(stage.name + STAGE_UNLOCK_SUFFIX, player)
+        stage_region = multiworld.get_region(stage.name, player)
 
-        stage_select.connect(
-            multiworld.get_region(stage.name, player),
-            rule=lambda state, st=stage: entrance_cond(state, st),
+        world.create_entrance(
+            stage_select, stage_region, Has(STAGE_UNLOCK_PREFIX + stage.name)
         )
-    
-    multiworld.completion_condition[player] = lambda state: state.has("Defeat Tabuu", player=player)
+
+    world.set_completion_rule(Has("Defeat Tabuu"))

@@ -1,4 +1,4 @@
-from typing import ClassVar, FrozenSet
+from typing import ClassVar, FrozenSet, Tuple
 from BaseClasses import Tutorial
 from worlds.AutoWorld import World, WebWorld
 from .Common import GAME_NAME, STICKERS
@@ -67,6 +67,8 @@ class SubspaceWorld(World):
     origin_region_name: str = "Stage Select"
     hint_blacklist: ClassVar[FrozenSet[str]] = frozenset(["Filler Placeholder"])
 
+    required_client_version: Tuple[int, int, int] = (0, 7, 7)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -84,7 +86,7 @@ class SubspaceWorld(World):
         populate_items(self)
 
     def set_rules(self) -> None:
-        set_rules(self.player, self.multiworld, self.options)
+        set_rules(self.player, self, self.options)
 
     def create_item(self, name: str):
         data = ITEM_DATA_TABLE[name]

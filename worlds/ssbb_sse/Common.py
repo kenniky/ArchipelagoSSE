@@ -11,6 +11,7 @@ class RoomDataType(Enum):
     horde = auto()
     brawl = auto()
 
+
 class GreatMazeRegion(Enum):
     NW = auto()
     NE = auto()
@@ -26,8 +27,13 @@ class StageData(NamedTuple):
 class OrangeCubeData(NamedTuple):
     stage: str
     description: str
-    byte_address: str
-    bit: int
+    trigger_id: int
+
+
+class SubspaceFightData(NamedTuple):
+    fight: str
+    trigger_id: int
+    item_trigger_id: int
 
 
 class RoomData(NamedTuple):
@@ -89,163 +95,140 @@ STAGES: list[StageData] = [
 
 # This also includes standing trophies that count similarly for clear %
 ORANGE_CUBES = [
-    OrangeCubeData("Skyworld", "Orange Cube on High Platform", "9016E50C", 1),
-    OrangeCubeData("The Jungle", "Orange Cube in Pit", "9016E513", 8),
-    OrangeCubeData("The Jungle", "Trophy Behind Trackball Blocks", "9016E513", 7),
-    OrangeCubeData("The Jungle", "Trophy by Rising Platform", "9016E513", 6),
-    OrangeCubeData("The Jungle", "Orange Cube in Optional Room", "9016E513", 5),
-    OrangeCubeData("The Plain", "Orange Cube Above Breakable Blocks", "9016E513", 4),
-    OrangeCubeData("The Plain", "Orange Cube in High-Up Room", "9016E513", 3),
-    OrangeCubeData("The Lake", "Orange Cube in Night Dimension", "9016E513", 2),
-    OrangeCubeData("The Lake", "Orange Cube Along River", "9016E513", 1),
-    OrangeCubeData("The Lake", "Orange Cube in River Room", "9016E512", 8),
-    OrangeCubeData("The Ruined Zoo", "Orange Cube on Upper Path", "9016E512", 7),
-    OrangeCubeData("The Ruined Zoo", "Orange Cube in Building", "9016E512", 6),
+    OrangeCubeData("Skyworld", "Orange Cube on High Platform", 511),
+    OrangeCubeData("The Jungle", "Orange Cube in Pit", 512),
+    OrangeCubeData("The Jungle", "Trophy Behind Trackball Blocks", 513),
+    OrangeCubeData("The Jungle", "Trophy by Rising Platform", 514),
+    OrangeCubeData("The Jungle", "Orange Cube in Optional Room", 515),
+    OrangeCubeData("The Plain", "Orange Cube Above Breakable Blocks", 516),
+    OrangeCubeData("The Plain", "Orange Cube in High-Up Room", 517),
+    OrangeCubeData("The Lake", "Orange Cube in Night Dimension", 518),
+    OrangeCubeData("The Lake", "Orange Cube Along River", 519),
+    OrangeCubeData("The Lake", "Orange Cube in River Room", 520),
+    OrangeCubeData("The Ruined Zoo", "Orange Cube on Upper Path", 521),
+    OrangeCubeData("The Ruined Zoo", "Orange Cube in Building", 522),
+    OrangeCubeData("The Battlefield Fortress", "Orange Cube Behind Locked Door", 523),
+    OrangeCubeData("The Battlefield Fortress", "Trophy Under Ledge", 524),
+    OrangeCubeData("The Battlefield Fortress", "Orange Cube in Minecart Room", 525),
+    OrangeCubeData("The Forest", "Orange Cube in Optional Room", 526),
+    OrangeCubeData("The Forest", "Orange Cube Behind Exploding Blocks", 527),
+    OrangeCubeData("The Research Facility I", "Orange Cube Along Elevator", 528),
+    OrangeCubeData("The Research Facility I", "Orange Cube in Far-Right Corner", 529),
+    OrangeCubeData("The Lake Shore", "Orange Cube Past Moving Wall", 530),
+    OrangeCubeData("The Lake Shore", "Orange Cube at Upper Ledge", 531),
+    OrangeCubeData("The Lake Shore", "Orange Cube Guarded by Shaydas", 532),
+    OrangeCubeData("The Lake Shore", "Orange Cube at End of Level", 533),
+    OrangeCubeData("The Path to the Ruins", "Orange Cube Near Falling Blocks", 534),
+    OrangeCubeData("The Path to the Ruins", "Left Trophy in Room in Pit", 535),
+    OrangeCubeData("The Path to the Ruins", "Top Trophy in Room in Pit", 536),
+    OrangeCubeData("The Path to the Ruins", "Right Trophy in Room in Pit", 537),
     OrangeCubeData(
-        "The Battlefield Fortress", "Orange Cube Behind Locked Door", "9016E512", 5
+        "The Path to the Ruins", "Orange Cube on Top Ledge After Fire Pillars", 538
     ),
-    OrangeCubeData("The Battlefield Fortress", "Trophy Under Ledge", "9016E512", 4),
+    OrangeCubeData("The Cave", "Orange Cube Below Descending Ceiling", 539),
+    OrangeCubeData("The Cave", "Orange Cube Behind Descending Ceiling", 540),
+    OrangeCubeData("The Cave", "Orange Cube in Falling Blocks Room", 541),
+    OrangeCubeData("The Ruins", "Trophy on Moving Ceiling", 542),
+    OrangeCubeData("The Ruins", "Orange Cube Above Breakable Wall", 543),
+    OrangeCubeData("The Ruins", "Orange Cube in Roturret Door", 544),
+    OrangeCubeData("The Wilds I", "Orange Cube in Breakable Wall", 545),
+    OrangeCubeData("The Wilds I", "Orange Cube in High Ledge Room", 546),
+    OrangeCubeData("The Wilds I", "Orange Cube in Room Near Cannons", 547),
+    OrangeCubeData("The Wilds II", "Orange Cube Below Elevator", 548),
+    OrangeCubeData("The Wilds II", "Orange Cube on Left Ledge", 549),
+    OrangeCubeData("The Swamp", "Orange Cube on Lower Ledge", 550),
+    OrangeCubeData("The Swamp", "Orange Cube Above Updraft", 551),
+    OrangeCubeData("The Swamp", "Orange Cube on High Platform", 552),
+    OrangeCubeData("The Swamp", "Trophy Behind Exploding Blocks", 553),
     OrangeCubeData(
-        "The Battlefield Fortress", "Orange Cube in Minecart Room", "9016E512", 3
+        "The Research Facility II", "Orange Cube Behind Lights-On Door", 554
     ),
-    OrangeCubeData("The Forest", "Orange Cube in Optional Room", "9016E512", 2),
-    OrangeCubeData("The Forest", "Orange Cube Behind Exploding Blocks", "9016E512", 1),
+    OrangeCubeData("The Research Facility II", "Orange Cube Past Moving Blocks", 555),
+    OrangeCubeData("The Research Facility II", "Orange Cube by Tall Shaft", 556),
     OrangeCubeData(
-        "The Research Facility I", "Orange Cube Along Elevator", "9016E511", 8
-    ),
-    OrangeCubeData(
-        "The Research Facility I", "Orange Cube in Far-Right Corner", "9016E511", 7
-    ),
-    OrangeCubeData("The Lake Shore", "Orange Cube Past Moving Wall", "9016E511", 6),
-    OrangeCubeData("The Lake Shore", "Orange Cube at Upper Ledge", "9016E511", 5),
-    OrangeCubeData("The Lake Shore", "Orange Cube Guarded by Shaydas", "9016E511", 4),
-    OrangeCubeData("The Lake Shore", "Orange Cube at End of Level", "9016E511", 3),
-    OrangeCubeData(
-        "The Path to the Ruins", "Orange Cube Near Falling Blocks", "9016E511", 2
-    ),
-    OrangeCubeData(
-        "The Path to the Ruins", "Left Trophy in Room in Pit", "9016E511", 1
-    ),
-    OrangeCubeData("The Path to the Ruins", "Top Trophy in Room in Pit", "9016E510", 8),
-    OrangeCubeData(
-        "The Path to the Ruins", "Right Trophy in Room in Pit", "9016E510", 7
-    ),
-    OrangeCubeData(
-        "The Path to the Ruins",
-        "Orange Cube on Top Ledge After Fire Pillars",
-        "9016E510",
-        6,
-    ),
-    OrangeCubeData("The Cave", "Orange Cube Below Descending Ceiling", "9016E510", 5),
-    OrangeCubeData("The Cave", "Orange Cube Behind Descending Ceiling", "9016E510", 4),
-    OrangeCubeData("The Cave", "Orange Cube in Falling Blocks Room", "9016E510", 3),
-    OrangeCubeData("The Ruins", "Trophy on Moving Ceiling", "9016E510", 2),
-    OrangeCubeData("The Ruins", "Orange Cube Above Breakable Wall", "9016E510", 1),
-    OrangeCubeData("The Ruins", "Orange Cube in Roturret Door", "9016E517", 8),
-    OrangeCubeData("The Wilds I", "Orange Cube in Breakable Wall", "9016E517", 7),
-    OrangeCubeData("The Wilds I", "Orange Cube in High Ledge Room", "9016E517", 6),
-    OrangeCubeData("The Wilds I", "Orange Cube in Room Near Cannons", "9016E517", 5),
-    OrangeCubeData("The Wilds II", "Orange Cube Below Elevator", "9016E517", 4),
-    OrangeCubeData("The Wilds II", "Orange Cube on Left Ledge", "9016E517", 3),
-    OrangeCubeData("The Swamp", "Orange Cube on Lower Ledge", "9016E517", 2),
-    OrangeCubeData("The Swamp", "Orange Cube Above Updraft", "9016E517", 1),
-    OrangeCubeData("The Swamp", "Orange Cube on High Platform", "9016E516", 8),
-    OrangeCubeData("The Swamp", "Trophy Behind Exploding Blocks", "9016E516", 7),
-    OrangeCubeData(
-        "The Research Facility II", "Orange Cube Behind Lights-On Door", "9016E516", 6
+        "Outside the Ancient Ruins", "Orange Cube Above Falling Blocks", 557
     ),
     OrangeCubeData(
-        "The Research Facility II", "Orange Cube Past Moving Blocks", "9016E516", 5
+        "Outside the Ancient Ruins", "Orange Cube Across Falling Blocks", 558
     ),
+    OrangeCubeData("The Glacial Peak", "Orange Cube on Right Ledge", 559),
+    OrangeCubeData("The Glacial Peak", "Orange Cube in Cabin", 560),
+    OrangeCubeData("The Glacial Peak", "Orange Cube Behind Icicle", 561),
+    OrangeCubeData("Battleship Halberd Interior", "Orange Cube in Hidden Room", 562),
+    OrangeCubeData("Battleship Halberd Interior", "Orange Cube by Door", 563),
+    OrangeCubeData("Battleship Halberd Interior", "Orange Cube Through Wall", 564),
+    OrangeCubeData("Battleship Halberd Interior", "Orange Cube Above Cymul", 565),
+    OrangeCubeData("Battleship Halberd Exterior", "Orange Cube in Ceiling", 566),
+    OrangeCubeData("Battleship Halberd Exterior", "Orange Cube Outside Halberd", 567),
     OrangeCubeData(
-        "The Research Facility II", "Orange Cube by Tall Shaft", "9016E516", 4
+        "The Subspace Bomb Factory I", "Orange Cube in Primid / ROB Trap", 568
     ),
+    OrangeCubeData("The Subspace Bomb Factory I", "Orange Cube High-Up in Room", 569),
+    OrangeCubeData("The Subspace Bomb Factory II", "Orange Cube Above Spring", 570),
     OrangeCubeData(
-        "Outside the Ancient Ruins", "Orange Cube Above Falling Blocks", "9016E516", 3
+        "The Subspace Bomb Factory II", "Orange Cube in Wall Jump Room", 571
     ),
-    OrangeCubeData(
-        "Outside the Ancient Ruins",
-        "Orange Cube Across Falling Blocks",
-        "9016E516",
-        2,
-    ),
-    OrangeCubeData("The Glacial Peak", "Orange Cube on Right Ledge", "9016E516", 1),
-    OrangeCubeData("The Glacial Peak", "Orange Cube in Cabin", "9016E515", 8),
-    OrangeCubeData("The Glacial Peak", "Orange Cube Behind Icicle", "9016E515", 7),
-    OrangeCubeData(
-        "Battleship Halberd Interior", "Orange Cube in Hidden Room", "9016E515", 6
-    ),
-    OrangeCubeData("Battleship Halberd Interior", "Orange Cube by Door", "9016E515", 5),
-    OrangeCubeData(
-        "Battleship Halberd Interior",
-        "Orange Cube Through Wall",
-        "9016E515",
-        4,
-    ),
-    OrangeCubeData(
-        "Battleship Halberd Interior", "Orange Cube Above Cymul", "9016E515", 3
-    ),
-    OrangeCubeData(
-        "Battleship Halberd Exterior", "Orange Cube in Ceiling", "9016E515", 2
-    ),
-    OrangeCubeData(
-        "Battleship Halberd Exterior", "Orange Cube Outside Halberd", "9016E515", 1
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory I", "Orange Cube in Primid / ROB Trap", "9016E514", 8
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory I", "Orange Cube High-Up in Room", "9016E514", 7
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory II", "Orange Cube Above Spring", "9016E514", 6
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory II", "Orange Cube in Wall Jump Room", "9016E514", 5
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory II", "Orange Cube Above Burners", "9016E514", 4
-    ),
-    OrangeCubeData(
-        "The Subspace Bomb Factory II", "Trophy Near Mite Portal", "9016E514", 3
-    ),
-    OrangeCubeData("Entrance to Subspace", "Trophy Behind Pillar", "9016E514", 2),
-    OrangeCubeData("Subspace I", "Orange Cube in Pit / Falco Room", "9016E514", 1),
-    OrangeCubeData("Subspace II", "Orange Cube Below Meta Knight", "9016E51B", 8),
-    OrangeCubeData("Subspace II", "Orange Cube by Cliff", "9016E51B", 7),
-    OrangeCubeData("The Great Maze NW", "Orange Cube in Room Past Pit", "9016E51B", 6),
-    OrangeCubeData("The Great Maze NW", "Orange Cube by Purple Cloud", "9016E51B", 5),
-    OrangeCubeData(
-        "The Great Maze NW", "Orange Cube in Night Dimension", "9016E51B", 4
-    ),
-    OrangeCubeData(
-        "The Great Maze NW", "Orange Cube Within Trackball Blocks", "9016E51B", 3
-    ),
-    OrangeCubeData(
-        "The Great Maze NE", "Orange Cube in Ruined Zoo Area", "9016E51B", 2
-    ),
-    OrangeCubeData("The Great Maze NE", "Orange Cube in Halberd Area", "9016E51B", 1),
-    OrangeCubeData("The Great Maze NE", "Orange Cube Above Mite Portal", "9016E51A", 8),
-    OrangeCubeData(
-        "The Great Maze NE",
-        "Orange Cube Hidden on Conveyor",
-        "9016E51A",
-        7,
-    ),
-    OrangeCubeData(
-        "The Great Maze SE", "Orange Cube on Top Ledge in Ruins Area", "9016E51A", 6
-    ),
-    OrangeCubeData(
-        "The Great Maze SE", "Orange Cube High Up in Swamp Area", "9016E51A", 5
-    ),
-    OrangeCubeData(
-        "The Great Maze SE", "Trophy Behind Exploding Blocks", "9016E51A", 4
-    ),
-    OrangeCubeData(
-        "The Great Maze SE", "Orange Cube in Room Past Falco", "9016E51A", 3
-    ),
-    OrangeCubeData("The Great Maze SW", "Trophy on Moving Ceiling", "9016E51A", 2),
-    OrangeCubeData("The Great Maze SW", "Orange Cube in Windy Area", "9016E51A", 1),
+    OrangeCubeData("The Subspace Bomb Factory II", "Orange Cube Above Burners", 572),
+    OrangeCubeData("The Subspace Bomb Factory II", "Trophy Near Mite Portal", 573),
+    OrangeCubeData("Entrance to Subspace", "Trophy Behind Pillar", 574),
+    OrangeCubeData("Subspace I", "Orange Cube in Pit / Falco Room", 575),
+    OrangeCubeData("Subspace II", "Orange Cube Below Meta Knight", 576),
+    OrangeCubeData("Subspace II", "Orange Cube by Cliff", 577),
+    OrangeCubeData("The Great Maze NW", "Orange Cube in Room Past Pit", 578),
+    OrangeCubeData("The Great Maze NW", "Orange Cube by Purple Cloud", 579),
+    OrangeCubeData("The Great Maze NW", "Orange Cube in Night Dimension", 580),
+    OrangeCubeData("The Great Maze NW", "Orange Cube Within Trackball Blocks", 581),
+    OrangeCubeData("The Great Maze NE", "Orange Cube in Ruined Zoo Area", 582),
+    OrangeCubeData("The Great Maze NE", "Orange Cube in Halberd Area", 583),
+    OrangeCubeData("The Great Maze NE", "Orange Cube Above Mite Portal", 584),
+    OrangeCubeData("The Great Maze NE", "Orange Cube Hidden on Conveyor", 585),
+    OrangeCubeData("The Great Maze SE", "Orange Cube on Top Ledge in Ruins Area", 586),
+    OrangeCubeData("The Great Maze SE", "Orange Cube High Up in Swamp Area", 587),
+    OrangeCubeData("The Great Maze SE", "Trophy Behind Exploding Blocks", 588),
+    OrangeCubeData("The Great Maze SE", "Orange Cube in Room Past Falco", 589),
+    OrangeCubeData("The Great Maze SW", "Trophy on Moving Ceiling", 590),
+    OrangeCubeData("The Great Maze SW", "Orange Cube in Windy Area", 591),
+]
+
+SUBSPACE_FIGHTS = [
+    SubspaceFightData("Petey Piranha", 896, 856),
+    SubspaceFightData("Porky", 897, 857),
+    SubspaceFightData("Duon", 898, 858),
+    SubspaceFightData("Ridley", 899, 859),
+    SubspaceFightData("Meta Ridley", 900, 860),
+    SubspaceFightData("Galleom", 901, 861),
+    SubspaceFightData("Rayquaza", 902, 862),
+    SubspaceFightData("Pit", 903, 863),
+    SubspaceFightData("Kirby", 904, 864),
+    SubspaceFightData("Yoshi", 905, 865),
+    SubspaceFightData("Link", 906, 866),
+    SubspaceFightData("Ness", 907, 867),
+    SubspaceFightData("Meta Knight", 908, 868),
+    SubspaceFightData("Snake", 909, 869),
+    SubspaceFightData("Mr. Game & Watch", 910, 870),
+    SubspaceFightData("Captain Falcon", 911, 871),
+    SubspaceFightData("Olimar", 912, 872),
+    SubspaceFightData("Diddy Kong", 913, 873),
+    SubspaceFightData("Donkey Kong", 914, 874),
+    SubspaceFightData("Ganondorf", 915, 875),
+    SubspaceFightData("Marth", 916, 876),
+    SubspaceFightData("Ike", 917, 877),
+    SubspaceFightData("Samus", 918, 878),
+    SubspaceFightData("Pikachu", 919, 879),
+    SubspaceFightData("ROB", 920, 880),
+    SubspaceFightData("King Dedede", 921, 881),
+    SubspaceFightData("Luigi", 922, 882),
+    SubspaceFightData("Falco", 923, 883),
+    SubspaceFightData("Fox", 924, 884),
+    SubspaceFightData("Mario", 925, 885),
+    SubspaceFightData("Zelda", 926, 886),
+    SubspaceFightData("Peach", 927, 887),
+    SubspaceFightData("Ice Climbers", 928, 888),
+    SubspaceFightData("Wario", 929, 889),
+    SubspaceFightData("Lucas", 930, 890),
+    SubspaceFightData("Pokemon Trainer", 931, 891),
+    SubspaceFightData("Bowser", 932, 892),
+    SubspaceFightData("Lucario", 933, 893),
 ]
 
 STICKERS = [

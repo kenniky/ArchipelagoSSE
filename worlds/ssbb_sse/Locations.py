@@ -1,9 +1,17 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, overload
 from dataclasses import dataclass, field
 from BaseClasses import Location, Region
 from enum import Enum, auto
 
-from .Common import GAME_NAME, STAGES, ORANGE_CUBES, OrangeCubeData, StageData
+from .Common import (
+    GAME_NAME,
+    STAGES,
+    ORANGE_CUBES,
+    OrangeCubeData,
+    StageData,
+    SubspaceFightData,
+    SUBSPACE_FIGHTS,
+)
 
 
 class MemoryType(Enum):
@@ -17,6 +25,7 @@ class LocationType(Enum):
     STAGE_COMPLETION = auto()
     ORANGE_CUBE = auto()
     GREAT_MAZE_FIGHT = auto()
+    SUBSPACE_FIGHT = auto()
 
 
 @dataclass
@@ -35,6 +44,8 @@ class SSELocation(Location):
     game: str = GAME_NAME
 
     data: Optional[SSELocationData]
+
+    # make init like the parent, and make a class method
 
     def __init__(
         self,
@@ -65,18 +76,28 @@ def build_orange_cube_name(stage: str, description: str):
     return stage + " - " + description
 
 
-def build_name_from_location_data(loc_data: StageData | OrangeCubeData):
+def build_subspace_fight_name(fight: str):
+    return "The Great Maze - Vs. " + fight
+
+
+def build_name_from_location_data(
+    loc_data: StageData | OrangeCubeData | SubspaceFightData,
+):
     if type(loc_data) is StageData:
         return build_stage_unlock_name(loc_data.name)
 
     if type(loc_data) is OrangeCubeData:
         return build_orange_cube_name(loc_data.stage, loc_data.description)
 
+    if type(loc_data) is SubspaceFightData:
+        return build_subspace_fight_name(loc_data.fight)
+
     return None
 
 
 STAGE_COMPLETION_OFFSET = 100
 ORANGE_CUBE_COMPLETION_OFFSET = 200
+SUBSPACE_FIGHT_COMPLETION_OFFSET = 300
 
 STAGE_COMPLETION_LOC_DATA: dict[str, SSELocationData] = {
     build_name_from_location_data(stage): SSELocationData(
@@ -97,11 +118,25 @@ ORANGE_CUBE_LOC_DATA: dict[str, SSELocationData] = {
         name=build_name_from_location_data(cube_info),
         code=idx + ORANGE_CUBE_COMPLETION_OFFSET,
         location_type=LocationType.ORANGE_CUBE,
-        other_info={"byte": cube_info.byte_address, "bit": cube_info.bit},
+        other_info={"trigger_id": cube_info.trigger_id},
     )
     for idx, cube_info in enumerate(ORANGE_CUBES)
 }
 
-LOC_DATA_TABLE = {**STAGE_COMPLETION_LOC_DATA, **ORANGE_CUBE_LOC_DATA}
+SUBSPACE_FIGHT_LOC_DATA: dict[str, SSELocationData] = {
+    build_name_from_location_data(fight_data): SSELocationData(
+        name=build_name_from_location_data(fight_data),
+        code=idx + SUBSPACE_FIGHT_COMPLETION_OFFSET,
+        location_type=LocationType.SUBSPACE_FIGHT,
+        other_info={"trigger_id": fight_data.trigger_id},
+    )
+    for idx, fight_data in enumerate(SUBSPACE_FIGHTS)
+}
+
+LOC_DATA_TABLE = {
+    **STAGE_COMPLETION_LOC_DATA,
+    **ORANGE_CUBE_LOC_DATA,
+    **SUBSPACE_FIGHT_LOC_DATA,
+}
 
 LOCATION_TABLE = {key: val.code for key, val in LOC_DATA_TABLE.items()}

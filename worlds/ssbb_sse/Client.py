@@ -18,7 +18,7 @@ from .Common import GAME_NAME, STAGES, get_map_order
 from .Items import ITEM_DATA_TABLE, SSEItemType, ITEM_REVERSE_LOOKUP
 import dolphin_memory_engine
 
-CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load Super Smash Bros. Brawl. Trying again in 5 seconds..."
+CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load an NTSC-USA copy of Super Smash Bros. Brawl. Trying again in 5 seconds..."
 CONNECTION_LOST_STATUS = "Dolphin connection was lost. Please restart your emulator and make sure Super Smash Bros. Brawl is running."
 CONNECTION_CONNECTED_STATUS = "Dolphin connected successfully."
 CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
@@ -35,6 +35,9 @@ CURRENT_SEQUENCE_ADDR = 0x805B8BB0
 SEQ_SUBSPACE = 0x90FF3D40
 
 SCREEN_ID_ADDR = 0x90FF3D48
+
+TRIGGER_BASE_ADDR = 0x910189E0
+TRIGGER_MANAGER_REF_ADDR = 0x80B8A698
 
 
 class StageDataEnum(Enum):
@@ -55,11 +58,12 @@ class SSECommandProcessor(ClientCommandProcessor):
         if isinstance(self.ctx, SSEContext):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
 
-    # def _cmd_debug_items(self) -> None:
-    #     if isinstance(self.ctx, SSEContext):
-    #         logger.info(self.ctx.last_item_idx)
-    #         logger.info(self.ctx.unlocked_stages)
-    #         logger.info(self.ctx.items_received)
+
+    def _cmd_debug_items(self) -> None:
+        if isinstance(self.ctx, SSEContext):
+            logger.info(self.ctx.last_item_idx)
+            logger.info(self.ctx.unlocked_stages)
+            logger.info(self.ctx.items_received)
 
 
 class SSEContext(CommonContext):
@@ -84,20 +88,10 @@ class SSEContext(CommonContext):
         self.last_item_idx: int = 0
 
         self.unlocked_stages: set[int] = set()
+        self.found_triggers: set[int] = set()
 
         # TODO: use
         self.has_send_death: bool = False
-
-        # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
-        # facilitate automatically switching to the map of the current stage.
-        self.current_stage_name: str = ""
-
-        # Set of visited stages. A dictionary (used as a set) of all visited stages is set in the server's data storage
-        # and updated when the player visits a new stage for the first time. To track which stages are new and need to
-        # cause the server's data storage to update, the TWW AP Client keeps track of the visited stages in a set.
-        # Trackers can request the dictionary from data storage to see which stages the player has visited.
-        # It starts as `None` until it has been read from the server.
-        self.visited_stage_names: Optional[set[str]] = None
 
     def on_package(self, cmd, args):
         if cmd == "Connected":
@@ -106,18 +100,27 @@ class SSEContext(CommonContext):
                     [
                         {
                             "cmd": "Get",
-                            "keys": [self.data_key_item_idx(), self.data_key_stages()],
+                            "keys": [
+                                self.data_key_item_idx(),
+                                self.data_key_stages(),
+                                self.data_key_triggers(),
+                            ],
                         }
                     ]
                 ),
                 name="get_data",
             )
         elif cmd == "Retrieved":
-            self.last_item_idx = args["keys"].get(self.data_key_item_idx(), 0)
+            self.last_item_idx = args["keys"].get(self.data_key_item_idx(), None)
             if args["keys"].get(self.data_key_stages(), []) is not None:
                 self.unlocked_stages = set(args["keys"].get(self.data_key_stages(), []))
             else:
                 self.unlocked_stages = set()
+
+            if args["keys"].get(self.data_key_triggers(), []) is not None:
+                self.found_triggers = set(args["keys"].get(self.data_key_triggers(), []))
+            else:
+                self.found_triggers = set()
 
             if self.last_item_idx is None:
                 self.last_item_idx = 0
@@ -139,8 +142,6 @@ class SSEContext(CommonContext):
 
         """
         self.auth = None
-        self.current_stage_name = ""
-        self.visited_stage_names = None
         await super().disconnect(allow_autoreconnect)
 
     def on_deathlink(self, data: dict[str, Any]) -> None:
@@ -157,6 +158,9 @@ class SSEContext(CommonContext):
 
     def data_key_stages(self):
         return f"stages_{self.auth}"
+
+    def data_key_triggers(self):
+        return f"triggers_{self.auth}"
 
 
 def bit_mask(bit_num: int):
@@ -186,9 +190,10 @@ def write_byte(console_address: int, hex_str: str) -> None:
 
 def read_bytes(console_address: int, num: int) -> int:
     """
-    Read a byte from Dolphin memory.
+    Read bytes from Dolphin memory.
 
     :param console_address: Address to read from.
+    :param num: number of bytes to read
     :return: The value read from memory.
     """
     return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, num))
@@ -202,6 +207,17 @@ def write_bytes(console_address: int, hex_str: str) -> None:
     :param value: Value to write.
     """
     dolphin_memory_engine.write_bytes(console_address, bytes.fromhex(hex_str))
+
+
+def read_word(console_address: int) -> str:
+    """
+    Read a string from Dolphin memory.
+
+    :param console_address: Address to start reading from.
+    :param strlen: Length of the string to read.
+    :return: The string.
+    """
+    return read_bytes(console_address, WORD_SIZE)
 
 
 def read_string(console_address: int, strlen: int) -> str:
@@ -226,6 +242,52 @@ def read_bit(console_address: str, bit_number: int) -> bool:
     return byte & bitmask != 0
 
 
+def get_trigger_base_address():
+    return read_word(0x8049ED34)
+
+
+def read_global_trigger(trigger_id: int) -> bool:
+    word_offset = trigger_id // 32
+    bit_offset = trigger_id % 32
+
+    word = read_word(get_trigger_base_address() + WORD_SIZE * word_offset)
+    bit_mask = 1 << bit_offset
+    return word & bit_mask != 0
+
+
+async def set_global_trigger(trigger_id: int):
+    # set in trigger database
+
+    word_offset = trigger_id // 32
+    bit_offset = trigger_id % 32
+
+    word = read_word(get_trigger_base_address() + WORD_SIZE * word_offset)
+    bit_mask = 1 << bit_offset
+    new_word = word | bit_mask
+
+    # print(f"setting trigger {trigger_id} at address {get_trigger_base_address() + WORD_SIZE * word_offset:#x}, set to word {new_word:#x}")
+
+    if new_word != word:
+        write_bytes(
+            get_trigger_base_address() + WORD_SIZE * word_offset,
+            format(new_word, "08x"),
+        )
+
+    # set in trigger manager
+    curr_screen = read_word(SCREEN_ID_ADDR)
+    if curr_screen in [0x0D, 0x10, 0x15, 0x18, 0x1B]:
+        trigger_manager_addr = read_word(TRIGGER_MANAGER_REF_ADDR)
+        next_trigger = read_word(trigger_manager_addr + 0x40)
+
+        while next_trigger != 0x0:
+            curr_trigger = read_word(next_trigger + 0x0C)
+            if curr_trigger == trigger_id:
+                write_byte(next_trigger + 0x2C, "01")
+                break
+            else:
+                next_trigger = read_word(next_trigger)
+
+
 def get_stage_data_addr(stage: str | int, data: StageDataEnum) -> int:
     if isinstance(stage, str):
         stage = get_map_order(stage)
@@ -243,14 +305,14 @@ def get_stage_data_addr(stage: str | int, data: StageDataEnum) -> int:
 
 def in_subspace() -> bool:
     try:
-        curr_seq = read_bytes(CURRENT_SEQUENCE_ADDR, WORD_SIZE)
+        curr_seq = read_word(CURRENT_SEQUENCE_ADDR)
 
         if curr_seq != SEQ_SUBSPACE:
             return False
 
-        screen_id = read_bytes(SCREEN_ID_ADDR, WORD_SIZE)
+        screen_id = read_word(SCREEN_ID_ADDR)
 
-        return screen_id >= 0x06
+        return screen_id > 0x06
     except:
         return False
 
@@ -262,15 +324,14 @@ async def check_locations(ctx: SSEContext) -> None:
         checked = False
 
         if loc.location_type == LocationType.STAGE_COMPLETION:
-            completion_status = read_bytes(
+            completion_status = read_word(
                 get_stage_data_addr(loc.other_info["map_order"], StageDataEnum.STATUS),
-                WORD_SIZE,
             )
             if completion_status in (0x0003, 0x0004):
                 checked = True
 
-        if loc.location_type == LocationType.ORANGE_CUBE:
-            if read_bit(loc.other_info["byte"], loc.other_info["bit"]):
+        if loc.location_type in [LocationType.ORANGE_CUBE, LocationType.SUBSPACE_FIGHT]:
+            if read_global_trigger(loc.other_info["trigger_id"]):
                 checked = True
 
         # others to be implemented
@@ -316,6 +377,12 @@ async def give_items(ctx: SSEContext) -> None:
 
             write_bytes(byte_addr, format(curr_value, "04x"))
 
+        if item_data.type == SSEItemType.TABUU_DOOR:
+            # print(f"received door item {item_data}")
+            ctx.found_triggers.add("trigger_id")
+
+    await set_found_triggers(ctx)
+
     ctx.last_item_idx = len(ctx.items_received)
 
     # update server data
@@ -340,6 +407,18 @@ async def give_items(ctx: SSEContext) -> None:
                     }
                 ],
             },
+            {
+                "cmd": "Set",
+                "key": ctx.data_key_triggers(),
+                "default": [],
+                "want_reply": True,
+                "operations": [
+                    {
+                        "operation": "replace",
+                        "value": list(ctx.found_triggers),
+                    }
+                ],
+            },
         ]
     )
 
@@ -348,7 +427,7 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
     # needs to be constantly fired
     if not in_subspace():
         return
-    
+
     # disable character get notifications
     write_byte(0x9016E546, "F0")
     write_byte(0x9016E545, "FF")
@@ -365,9 +444,9 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
             # print(availability_addr)
             # stage is unlocked
             write_bytes(availability_addr, "00000000")
-            if read_bytes(status_addr, WORD_SIZE) == 0x00000000:
+            if read_word(status_addr) == 0x00000000:
                 write_bytes(status_addr, "00000001")
-            
+
             # Patch PT in the Ruins, if not encountered yet
             if stage_data.name == "The Ruins":
                 pt_byte = read_byte(0x90172740)
@@ -376,6 +455,40 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
         else:
             # stage is not unlocked
             write_bytes(availability_addr, "00000001")
+
+async def set_found_triggers(ctx: SSEContext) -> None:
+    if not in_subspace():
+        return
+    
+    addresses = {}
+
+    for trigger in ctx.found_triggers:
+        word_offset = trigger // 32
+        bit_offset = trigger % 32
+
+        word_address = get_trigger_base_address() + WORD_SIZE * word_offset
+
+        if word_address not in addresses:
+            addresses[word_address] = read_word(word_address)
+        
+        addresses[word_address] |= 1 << bit_offset
+
+        # set in trigger manager            
+        curr_screen = read_word(SCREEN_ID_ADDR)
+        if curr_screen in [0x0D, 0x10, 0x15, 0x18, 0x1B]:
+            trigger_manager_addr = read_word(TRIGGER_MANAGER_REF_ADDR)
+            next_trigger = read_word(trigger_manager_addr + 0x40)
+
+            while next_trigger != 0x0:
+                curr_trigger = read_word(next_trigger + 0x0C)
+                if curr_trigger == trigger:
+                    write_byte(next_trigger + 0x2C, "01")
+                    break
+                else:
+                    next_trigger = read_word(next_trigger)
+    
+    for address, val in addresses.items():
+        write_bytes(address, format(val, "08x"))
 
 
 async def dolphin_sync_task(ctx: SSEContext) -> None:
