@@ -29,11 +29,11 @@ You can follow the [official instructions](https://archipelago.gg/tutorial/Archi
 
 The mod for the Subspace Emissary APWorld uses the same loading method as most Brawl mods. If you've ever modded Brawl in Dolphin before, most of the setup here should be familiar.
 
-1. Download the Dolphin version of [MinimaLauncher](https://forums.brawlminus.net/threads/release-minimalauncher-v1-2.354/) ([Direct link](https://www.dropbox.com/s/9288lgppfw39fs3/Minus%20Launcher.elf?dl=0)). Once you've downloaded this file (it should be called `Minus Launcher.elf`), put it with your ROM files. It should show up in Dolphin now.
+1. Download the Dolphin version of [MinimaLauncher](https://forums.brawlminus.net/threads/release-minimalauncher-v1-2.354/) ([Direct link](https://www.dropbox.com/s/9288lgppfw39fs3/Minus%20Launcher.elf?dl=0)). Once you've downloaded this file (it should be called `Minus Launcher.elf`), put it with your ROM files. It should show up in Dolphin now; if it's not there, click `File -> Open` in Dolphin and open it.
 
     ![](images/dolphinminus.png)
 
-2. Open the Archipelago Launcher, and then launch the `Subspace Emissary Client` from the launcher. (If it doesn't show up, make sure you installed the APWorld; see [Installing the APWorld](#installing-the-apworld) above.)
+2. Open the Archipelago Launcher, and then launch the `Subspace Emissary Client` from the launcher. (If it's not there, make sure you installed the APWorld; see [Installing the APWorld](#installing-the-apworld) above.)
 
 3. Within the client, run `/create_sd`. The first time you do this, it will ask you for `DolphinTool.exe` — this is a program that should have been included when you downloaded Dolphin, and is usually located in the same directory as the emulator. **It is not the Dolphin emulator itself.** If you don't have it, you should redownload / reinstall Dolphin; you can also download it standalone [from this repository](https://github.com/ElektroStudios/Dolphin_Emulator_RVZ_ISO_GameCube_Wii_Conversion_Scripts/releases).
 
@@ -42,8 +42,6 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
     It will also ask you for your Super Smash Bros. Brawl ROM. Note that **only NTSC USA ROMs** will work, and other releases will be rejected. (However, both v1.01 and v1.02 are usable.)
 
     **Note:** At the moment, this APWorld does not support customization, so you can use the same SD card for every run. This means you **do not** have to run `/create_sd` if you've already done it before.
-
-    **Note:** the client will freeze for a bit when the `create_sd` command runs. This is primarily because I do not really understand asynchronous functions, if you have a better grasp on it than I do please let me know lol
 
 4. When the command finishes, it will inform you of an `sd_card` folder that it has created, usually in the same place that your Brawl ROM is located. Open Dolphin and click on `Config` on the top bar, or go to `Options -> Configuration`. Once in the Settings window, navigate to `Wii` on the left side and you'll see some `SD Card Settings`.
 

@@ -18,6 +18,7 @@ from .Locations import LOC_DATA_TABLE, LocationType
 from .Common import GAME_NAME, STAGES, get_map_order
 from .Items import ITEM_DATA_TABLE, SSEItemType, ITEM_REVERSE_LOOKUP
 import dolphin_memory_engine
+import threading
 
 CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load an NTSC-USA copy of Super Smash Bros. Brawl. Trying again in 5 seconds..."
 CONNECTION_LOST_STATUS = "Dolphin connection was lost. Please restart your emulator and make sure Super Smash Bros. Brawl is running."
@@ -68,7 +69,9 @@ class SSECommandProcessor(ClientCommandProcessor):
 
     def _cmd_create_sd(self) -> None:
         if isinstance(self.ctx, SSEContext):
-            asyncio.create_task(create_sd(self.ctx))
+            thread = threading.Thread(target=create_sd, args=(self.ctx,))
+            
+            thread.start()
 
 
 class SSEContext(CommonContext):

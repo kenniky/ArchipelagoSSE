@@ -9,9 +9,11 @@ import tempfile
 import bsdiff4
 
 
-async def create_sd(ctx: CommonContext):
+def create_sd(ctx: CommonContext):
     dolphin_tool = get_settings().sse_settings.dolphin_tool
     brawl_iso = get_settings().sse_settings.brawl_iso
+
+    logger.info('Checking your ROM file...')
 
     with open(brawl_iso, mode="rb") as f:
         md5_hash = hashlib.file_digest(f, "md5").hexdigest()
@@ -24,6 +26,8 @@ async def create_sd(ctx: CommonContext):
                 )
             )
             return
+        
+    logger.info('Creating SD card')
 
     brawl_dir = Path(brawl_iso).parent
     sd_dir = brawl_dir / "sd_card"
@@ -32,10 +36,12 @@ async def create_sd(ctx: CommonContext):
     except FileExistsError:
         logger.error(
             "SD card directory "
-            + sd_dir
+            + str(sd_dir)
             + " already exists - please remove it first"
         )
         return
+
+    logger.info("Created SD card folder")
 
     # necessary codes
     codes_dir = sd_dir / "codes"
@@ -46,7 +52,7 @@ async def create_sd(ctx: CommonContext):
     with importlib.resources.open_text(__name__, "sdcard/RSBE01.txt") as rsbe_txt:
         rsbe01_txt = codes_dir / "RSBE01.txt"
         rsbe01_txt.write_text(rsbe_txt.read())
-    
+
     logger.info("Wrote mod codes")
 
     adventure_pac_folder = sd_dir / "private/wii/app/RSBE/pf/stage/adventure"
@@ -72,11 +78,11 @@ async def create_sd(ctx: CommonContext):
 
         patch_file(pac_420037a_o, "sdcard/420037a.patch", pac_420037a)
 
-    logger.info("Created SD card directory at ", sd_dir)
+    logger.info("Created SD card directory at " + str(sd_dir))
     logger.info("Please use Dolphin to convert the directory into a usable SD card!")
 
 
-async def patch_file(origin_file, patch_path, target_file=None):
+def patch_file(origin_file, patch_path, target_file=None):
     with tempfile.TemporaryDirectory() as tmpdirname:
         # Copy patch file to temporary directory
         temp_dir = Path(tmpdirname)
