@@ -15,6 +15,7 @@ from .Regions import create_regions
 from .Rules import set_rules
 from .Options import SSEOptions
 from worlds.LauncherComponents import components, Component, Type, launch
+import settings
 
 
 def run_client(*args: str) -> None:
@@ -51,6 +52,21 @@ class SubspaceWeb(WebWorld):
     ]
 
 
+class SubspaceSettings(settings.Group):
+    class DolphinTool(settings.UserFilePath):
+        required = True
+        is_exe = True
+        description = "Dolphin tool exe"
+
+    class BrawlIso(settings.UserFilePath):
+        required = True
+        description = "SSBB NTSC USA iso file"
+        md5s = ["52ce7160ced2505ad5e397477d0ea4fe", "d18726e6dfdc8bdbdad540b561051087"]
+
+    dolphin_tool: DolphinTool = DolphinTool("DolphinTool.exe")
+    brawl_iso: BrawlIso = BrawlIso("Super Smash Bros. Brawl (USA).iso")
+
+
 class SubspaceWorld(World):
     """the subspace emissary"""
 
@@ -64,10 +80,13 @@ class SubspaceWorld(World):
     item_name_to_id: ClassVar[dict[str, int]] = ITEM_TABLE
     location_name_to_id: ClassVar[dict[str, int]] = LOCATION_TABLE
 
-    origin_region_name: str = "Stage Select"
+    origin_region_name: ClassVar[str] = "Stage Select"
     hint_blacklist: ClassVar[FrozenSet[str]] = frozenset(["Filler Placeholder"])
 
     required_client_version: Tuple[int, int, int] = (0, 7, 7)
+
+    settings_key = "sse_settings"
+    settings: ClassVar[SubspaceSettings]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,3 +117,7 @@ class SubspaceWorld(World):
         sticker_idx = self.random.randrange(len(STICKERS))
         sticker_data = STICKERS[sticker_idx]
         return build_sticker_name(sticker_data)
+
+    def generate_output(self, output_directory):
+        # can i make this an executable
+        pass
