@@ -83,8 +83,6 @@ class SubspaceWorld(World):
     origin_region_name: ClassVar[str] = "Stage Select"
     hint_blacklist: ClassVar[FrozenSet[str]] = frozenset(["Filler Placeholder"])
 
-    required_client_version: Tuple[int, int, int] = (0, 7, 7)
-
     settings_key = "sse_settings"
     settings: ClassVar[SubspaceSettings]
 
