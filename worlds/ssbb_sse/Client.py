@@ -387,7 +387,7 @@ async def give_items(ctx: SSEContext) -> None:
 
         if item_data.type == SSEItemType.TABUU_DOOR:
             # print(f"received door item {item_data}")
-            ctx.found_triggers.add("trigger_id")
+            ctx.found_triggers.add(item_data.other_info["trigger_id"])
 
     await set_found_triggers(ctx)
 
