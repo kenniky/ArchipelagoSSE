@@ -60,17 +60,16 @@ class SSECommandProcessor(ClientCommandProcessor):
         if isinstance(self.ctx, SSEContext):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
 
-
-    def _cmd_debug_items(self) -> None:
-        if isinstance(self.ctx, SSEContext):
-            logger.info(self.ctx.last_item_idx)
-            logger.info(self.ctx.unlocked_stages)
-            logger.info(self.ctx.items_received)
+    # def _cmd_debug_items(self) -> None:
+    #     if isinstance(self.ctx, SSEContext):
+    #         logger.info(self.ctx.last_item_idx)
+    #         logger.info(self.ctx.unlocked_stages)
+    #         logger.info(self.ctx.items_received)
 
     def _cmd_create_sd(self) -> None:
         if isinstance(self.ctx, SSEContext):
             thread = threading.Thread(target=create_sd, args=(self.ctx,))
-            
+
             thread.start()
 
 
@@ -94,6 +93,8 @@ class SSEContext(CommonContext):
         self.awaiting_rom: bool = False
 
         self.last_item_idx: int = 0
+
+        self.counter: int = 0
 
         self.unlocked_stages: set[int] = set()
         self.found_triggers: set[int] = set()
@@ -126,7 +127,9 @@ class SSEContext(CommonContext):
                 self.unlocked_stages = set()
 
             if args["keys"].get(self.data_key_triggers(), []) is not None:
-                self.found_triggers = set(args["keys"].get(self.data_key_triggers(), []))
+                self.found_triggers = set(
+                    args["keys"].get(self.data_key_triggers(), [])
+                )
             else:
                 self.found_triggers = set()
 
@@ -169,6 +172,13 @@ class SSEContext(CommonContext):
 
     def data_key_triggers(self):
         return f"triggers_{self.auth}"
+
+    def dump_data(self):
+        return {
+            self.data_key_item_idx(): self.last_item_idx,
+            self.data_key_stages(): self.unlocked_stages.copy(),
+            self.data_key_triggers: self.found_triggers.copy(),
+        }
 
 
 def bit_mask(bit_num: int):
@@ -360,23 +370,25 @@ async def check_locations(ctx: SSEContext) -> None:
 
 
 async def give_items(ctx: SSEContext) -> None:
+    ctx.counter += 1
+
     if ctx.last_item_idx is None:
         # print("last item idx got set to None")
         ctx.last_item_idx = 0
 
-    # pre-emptively exit if we've received everything already
-    if len(ctx.items_received) <= ctx.last_item_idx:
-        return
+    original_values = ctx.dump_data()
 
-    # print(f'grabbing items after {ctx.last_item_idx}')
-
-    for item in ctx.items_received[ctx.last_item_idx :]:
+    for _, item in enumerate(ctx.items_received):
         item_data = ITEM_DATA_TABLE[ITEM_REVERSE_LOOKUP[item.item]]
 
         if item_data.type == SSEItemType.STAGE_UNLOCK:
             ctx.unlocked_stages.add(item_data.other_info["map_order"])
 
         if item_data.type == SSEItemType.STICKER:
+            # don't send these multiple times
+            if len(ctx.items_received) <= ctx.last_item_idx:
+                continue
+
             byte_addr = int(item_data.other_info["byte"], 16)
             curr_value = read_bytes(byte_addr, 2)
 
@@ -389,46 +401,53 @@ async def give_items(ctx: SSEContext) -> None:
             # print(f"received door item {item_data}")
             ctx.found_triggers.add(item_data.other_info["trigger_id"])
 
-    await set_found_triggers(ctx)
-
     ctx.last_item_idx = len(ctx.items_received)
 
-    # update server data
-    await ctx.send_msgs(
-        [
-            {
-                "cmd": "Set",
-                "key": ctx.data_key_item_idx(),
-                "default": 0,
-                "want_reply": True,
-                "operations": [{"operation": "replace", "value": ctx.last_item_idx}],
-            },
-            {
-                "cmd": "Set",
-                "key": ctx.data_key_stages(),
-                "default": [],
-                "want_reply": True,
-                "operations": [
-                    {
-                        "operation": "replace",
-                        "value": list(ctx.unlocked_stages),
-                    }
-                ],
-            },
-            {
-                "cmd": "Set",
-                "key": ctx.data_key_triggers(),
-                "default": [],
-                "want_reply": True,
-                "operations": [
-                    {
-                        "operation": "replace",
-                        "value": list(ctx.found_triggers),
-                    }
-                ],
-            },
-        ]
-    )
+    # Persistent storage
+    if ctx.counter > 100 or ctx.dump_data() == original_values:
+        # Fire every 10 seconds, or if data has changed
+        ctx.counter = 0
+        
+        await set_found_triggers(ctx)
+
+        # update server data
+        await ctx.send_msgs(
+            [
+                {
+                    "cmd": "Set",
+                    "key": ctx.data_key_item_idx(),
+                    "default": 0,
+                    "want_reply": True,
+                    "operations": [
+                        {"operation": "replace", "value": ctx.last_item_idx}
+                    ],
+                },
+                {
+                    "cmd": "Set",
+                    "key": ctx.data_key_stages(),
+                    "default": [],
+                    "want_reply": True,
+                    "operations": [
+                        {
+                            "operation": "replace",
+                            "value": list(ctx.unlocked_stages),
+                        }
+                    ],
+                },
+                {
+                    "cmd": "Set",
+                    "key": ctx.data_key_triggers(),
+                    "default": [],
+                    "want_reply": True,
+                    "operations": [
+                        {
+                            "operation": "replace",
+                            "value": list(ctx.found_triggers),
+                        }
+                    ],
+                },
+            ]
+        )
 
 
 async def update_stage_unlocks(ctx: SSEContext) -> None:
@@ -464,10 +483,11 @@ async def update_stage_unlocks(ctx: SSEContext) -> None:
             # stage is not unlocked
             write_bytes(availability_addr, "00000001")
 
+
 async def set_found_triggers(ctx: SSEContext) -> None:
     if not in_subspace():
         return
-    
+
     addresses = {}
 
     for trigger in ctx.found_triggers:
@@ -478,10 +498,10 @@ async def set_found_triggers(ctx: SSEContext) -> None:
 
         if word_address not in addresses:
             addresses[word_address] = read_word(word_address)
-        
+
         addresses[word_address] |= 1 << bit_offset
 
-        # set in trigger manager            
+        # set in trigger manager
         curr_screen = read_word(SCREEN_ID_ADDR)
         if curr_screen in [0x0D, 0x10, 0x15, 0x18, 0x1B]:
             trigger_manager_addr = read_word(TRIGGER_MANAGER_REF_ADDR)
@@ -494,7 +514,7 @@ async def set_found_triggers(ctx: SSEContext) -> None:
                     break
                 else:
                     next_trigger = read_word(next_trigger)
-    
+
     for address, val in addresses.items():
         write_bytes(address, format(val, "08x"))
 
