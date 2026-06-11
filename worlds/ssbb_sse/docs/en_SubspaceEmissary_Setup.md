@@ -35,7 +35,7 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
 
 2. Open the Archipelago Launcher, and then launch the `Subspace Emissary Client` from the launcher. (If it's not there, make sure you installed the APWorld; see [Installing the APWorld](#installing-the-apworld) above.)
 
-3. Within the client, run `/create_sd`. The first time you do this, it will ask you for `DolphinTool.exe` — this is a program that should have been included when you downloaded Dolphin, and is usually located in the same directory as the emulator. **It is not the Dolphin emulator itself.** If you don't have it, you should redownload / reinstall Dolphin; you can also download it standalone [from this repository](https://github.com/ElektroStudios/Dolphin_Emulator_RVZ_ISO_GameCube_Wii_Conversion_Scripts/releases).
+3. Within the client, run `/create_sd`. The first time you do this, it will ask you for `DolphinTool.exe` — this is a program that should have been included when you downloaded Dolphin, and is usually located in the same directory as the emulator. **It is not the Dolphin emulator itself.** If you don't have it, you should redownload / reinstall Dolphin.
 
     ![](images/dolphintool.png)
 
