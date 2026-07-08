@@ -43,6 +43,12 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
 
     **Note:** At the moment, this APWorld does not support customization, so you can use the same SD card for every run. This means you **do not** have to run `/create_sd` if you've already done it before.
 
+    **Note:** The command, when run, should output something similar to the following:
+
+    ![](images/createsd.png)
+
+    If this doesn't happen (especially if the first line never prints) please let me know in the Discord channel.
+
 4. When the command finishes, it will inform you of an `sd_card` folder that it has created, usually in the same place that your Brawl ROM is located. Open Dolphin and click on `Config` on the top bar, or go to `Options -> Configuration`. Once in the Settings window, navigate to `Wii` on the left side and you'll see some `SD Card Settings`.
 
     First, make sure `Insert SD Card` and `Allow Writes to SD Card` are checked. Use the file explorer to set your `SD Sync Folder` to the `sd_card` folder that was created for you. You should also either change the `SD Card Path` or copy the existing `sd.raw` file if you don't want to lose anything on it. You can pick an `SD Card File Size` (for Archipelago, 64 MiB is sufficient) and finally, select `Pack SD Card Now`. This will compress the folder that was created into an SD card that Dolphin can use.
@@ -53,7 +59,11 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
 
     ![](images/dolphindefault.png)
 
-6. Double click the `Minus Launcher.elf` to start up the game, and enter the server connection info into your client (if you closed it since step 2, just reopen it.). You should then be good to go!
+6. Double click the `Minus Launcher.elf` to start up the game, and enter the server connection info into your client (if you closed it since step 2, just reopen it). You should then be good to go!
+
+    **Note:** You can check to make sure the SD card is loaded correctly by the slightly modified title screen.
+
+    ![](images/titlescreen.png)
 
 # Questions / Bugs
 

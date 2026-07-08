@@ -13,7 +13,7 @@ def create_sd(ctx: CommonContext):
     dolphin_tool = get_settings().sse_settings.dolphin_tool
     brawl_iso = get_settings().sse_settings.brawl_iso
 
-    logger.info('Checking your ROM file...')
+    logger.info("Checking your ROM file...")
 
     with open(brawl_iso, mode="rb") as f:
         md5_hash = hashlib.file_digest(f, "md5").hexdigest()
@@ -26,8 +26,8 @@ def create_sd(ctx: CommonContext):
                 )
             )
             return
-        
-    logger.info('Creating SD card')
+
+    logger.info("Creating SD card")
 
     brawl_dir = Path(brawl_iso).parent
     sd_dir = brawl_dir / "sd_card"
@@ -57,9 +57,15 @@ def create_sd(ctx: CommonContext):
 
     adventure_pac_folder = sd_dir / "private/wii/app/RSBE/pf/stage/adventure"
     adventure_pac_folder.mkdir(parents=True)
+
+    menu2_folder = sd_dir / "private/wii/app/RSBE/pfmenu2"
+    menu2_folder.mkdir(parents=True)
+
     # extract pac files from rom
     with tempfile.TemporaryDirectory() as tmpdirname:
         temp_dir = Path(tmpdirname)
+
+        # Patch Tabuu door room
         subprocess.run(
             [
                 dolphin_tool,
@@ -78,9 +84,27 @@ def create_sd(ctx: CommonContext):
 
         patch_file(pac_420037a_o, "sdcard/420037a.patch", pac_420037a)
 
+        # Patch title screen
+        subprocess.run(
+            [
+                dolphin_tool,
+                "extract",
+                "-i",
+                brawl_iso,
+                "-s",
+                "menu2/sc_title_en.pac",
+                "-o",
+                temp_dir,
+                "-q",
+            ]
+        )
+        sc_title_o = temp_dir / "DATA/files/menu2/sc_title_en.pac"
+        sc_title = menu2_folder / "sc_title.pac"
+
+        patch_file(sc_title_o, "sdcard/sc_title.patch", sc_title)
+
     logger.info("Created SD card directory at " + str(sd_dir))
     logger.info("Please use Dolphin to convert the directory into a usable SD card!")
-
 
 def patch_file(origin_file, patch_path, target_file=None):
     with tempfile.TemporaryDirectory() as tmpdirname:

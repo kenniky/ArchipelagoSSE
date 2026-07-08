@@ -38,7 +38,7 @@ SEQ_SUBSPACE = 0x90FF3D40
 
 SCREEN_ID_ADDR = 0x90FF3D48
 
-TRIGGER_BASE_ADDR = 0x910189E0
+TRIGGER_BASE_ADDR = 0x8049ED34
 TRIGGER_MANAGER_REF_ADDR = 0x80B8A698
 
 
@@ -67,10 +67,29 @@ class SSECommandProcessor(ClientCommandProcessor):
     #         logger.info(self.ctx.items_received)
 
     def _cmd_create_sd(self) -> None:
+        """
+        Create the SD card that will apply the mod to Brawl.
+        See the setup guide for more info.
+        """
         if isinstance(self.ctx, SSEContext):
             thread = threading.Thread(target=create_sd, args=(self.ctx,))
 
             thread.start()
+    
+    def _cmd_debug_output(self) -> None:
+        """
+        If your client sends a bunch of checks for no reason, run this command.
+        Copy or screenshot the result into the Discord thread.
+        """
+        if not dolphin_memory_engine.is_hooked():
+            print("not connected to dolphin")
+
+        seq = read_word(CURRENT_SEQUENCE_ADDR)
+        print(format(seq, "04x"))
+
+        bytes = read_bytes(0x90FF3D40, 16)
+        print(format(bytes, "016x"))
+
 
 
 class SSEContext(CommonContext):
@@ -181,6 +200,10 @@ class SSEContext(CommonContext):
         }
 
 
+def get_reference(reference: int):
+    return read_word(reference)
+
+
 def bit_mask(bit_num: int):
     # 1 indexed
     return 0b1 << (8 - bit_num)
@@ -260,15 +283,11 @@ def read_bit(console_address: str, bit_number: int) -> bool:
     return byte & bitmask != 0
 
 
-def get_trigger_base_address():
-    return read_word(0x8049ED34)
-
-
 def read_global_trigger(trigger_id: int) -> bool:
     word_offset = trigger_id // 32
     bit_offset = trigger_id % 32
 
-    word = read_word(get_trigger_base_address() + WORD_SIZE * word_offset)
+    word = read_word(get_reference(TRIGGER_BASE_ADDR) + WORD_SIZE * word_offset)
     bit_mask = 1 << bit_offset
     return word & bit_mask != 0
 
@@ -279,7 +298,7 @@ async def set_global_trigger(trigger_id: int):
     word_offset = trigger_id // 32
     bit_offset = trigger_id % 32
 
-    word = read_word(get_trigger_base_address() + WORD_SIZE * word_offset)
+    word = read_word(get_reference(TRIGGER_BASE_ADDR) + WORD_SIZE * word_offset)
     bit_mask = 1 << bit_offset
     new_word = word | bit_mask
 
@@ -287,7 +306,7 @@ async def set_global_trigger(trigger_id: int):
 
     if new_word != word:
         write_bytes(
-            get_trigger_base_address() + WORD_SIZE * word_offset,
+            get_reference(TRIGGER_BASE_ADDR) + WORD_SIZE * word_offset,
             format(new_word, "08x"),
         )
 
@@ -494,7 +513,7 @@ async def set_found_triggers(ctx: SSEContext) -> None:
         word_offset = trigger // 32
         bit_offset = trigger % 32
 
-        word_address = get_trigger_base_address() + WORD_SIZE * word_offset
+        word_address = get_reference(TRIGGER_BASE_ADDR) + WORD_SIZE * word_offset
 
         if word_address not in addresses:
             addresses[word_address] = read_word(word_address)
