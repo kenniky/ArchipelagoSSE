@@ -17,7 +17,7 @@ def create_sd(ctx: CommonContext):
 
     with open(brawl_iso, mode="rb") as f:
         md5_hash = hashlib.file_digest(f, "md5").hexdigest()
-        if md5_hash not in brawl_iso.md5s:
+        if md5_hash not in brawl_iso.md5_hashes:
             logger.error(
                 (
                     "Provided Brawl ISO did not hash correctly. "
