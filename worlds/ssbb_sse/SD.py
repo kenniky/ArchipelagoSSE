@@ -8,6 +8,7 @@ from CommonClient import CommonContext, logger
 import tempfile
 import bsdiff4
 
+SDCARD_ANCHOR = "worlds.ssbb_sse.sdcard"
 
 def create_sd(ctx: CommonContext):
     dolphin_tool = get_settings().sse_settings.dolphin_tool
@@ -46,10 +47,10 @@ def create_sd(ctx: CommonContext):
     # necessary codes
     codes_dir = sd_dir / "codes"
     codes_dir.mkdir()
-    with importlib.resources.open_binary(__name__, "sdcard/RSBE01.gct") as rsbe_bytes:
+    with importlib.resources.open_binary(SDCARD_ANCHOR, "RSBE01.gct") as rsbe_bytes:
         rsbe01_gct = codes_dir / "RSBE01.gct"
         rsbe01_gct.write_bytes(rsbe_bytes.read())
-    with importlib.resources.open_text(__name__, "sdcard/RSBE01.txt") as rsbe_txt:
+    with importlib.resources.open_text(SDCARD_ANCHOR, "RSBE01.txt") as rsbe_txt:
         rsbe01_txt = codes_dir / "RSBE01.txt"
         rsbe01_txt.write_text(rsbe_txt.read())
 
@@ -82,7 +83,7 @@ def create_sd(ctx: CommonContext):
         pac_420037a_o = temp_dir / "DATA/files/stage/adventure/420037a.pac"
         pac_420037a = adventure_pac_folder / "420037a.pac"
 
-        patch_file(pac_420037a_o, "sdcard/420037a.patch", pac_420037a)
+        patch_file(pac_420037a_o, "420037a.patch", pac_420037a)
 
         # Patch title screen
         subprocess.run(
@@ -101,7 +102,7 @@ def create_sd(ctx: CommonContext):
         sc_title_o = temp_dir / "DATA/files/menu2/sc_title_en.pac"
         sc_title = menu2_folder / "sc_title.pac"
 
-        patch_file(sc_title_o, "sdcard/sc_title.patch", sc_title)
+        patch_file(sc_title_o, "sc_title.patch", sc_title)
 
     logger.info("Created SD card directory at " + str(sd_dir))
     logger.info("Please use Dolphin to convert the directory into a usable SD card!")
@@ -110,7 +111,7 @@ def patch_file(origin_file, patch_path, target_file=None):
     with tempfile.TemporaryDirectory() as tmpdirname:
         # Copy patch file to temporary directory
         temp_dir = Path(tmpdirname)
-        with importlib.resources.open_binary(__name__, patch_path) as patch_data:
+        with importlib.resources.open_binary(SDCARD_ANCHOR, patch_path) as patch_data:
             patchfile = temp_dir / "patch.patch"
             patchfile.write_bytes(patch_data.read())
 

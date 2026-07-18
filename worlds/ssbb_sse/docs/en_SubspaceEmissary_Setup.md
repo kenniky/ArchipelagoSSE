@@ -39,6 +39,8 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
 
     ![](images/dolphintool.png)
 
+    **Note:** The Linux Distribution of Dolphin does **not** include DolphinTool, and as such, it must be installed separately. Install `dolphin-emu-tool`, then use `whereis dolphin-tool` to find the install location. Select this location instead of `DolphinTool.exe`
+
     It will also ask you for your Super Smash Bros. Brawl ROM. Note that **only NTSC USA ROMs** will work, and other releases will be rejected. (However, both v1.01 and v1.02 are usable.)
 
     **Note:** At the moment, this APWorld does not support customization, so you can use the same SD card for every run. This means you **do not** have to run `/create_sd` if you've already done it before.
