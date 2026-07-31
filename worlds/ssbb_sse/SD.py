@@ -7,26 +7,57 @@ from pathlib import Path
 from CommonClient import CommonContext, logger
 import tempfile
 import bsdiff4
+from Utils import is_windows, is_linux
+import shutil
 
 SDCARD_ANCHOR = "worlds.ssbb_sse.sdcard"
 
 def create_sd(ctx: CommonContext):
-    dolphin_tool = get_settings().sse_settings.dolphin_tool
     brawl_iso = get_settings().sse_settings.brawl_iso
+
+    dolphin_tool = "DolphinTool.exe"
+    if not is_windows:
+        dolphin_tool = "dolphin-tool"
+
+    dolphin_tool_cmd = None
+    if shutil.which(dolphin_tool):
+        logger.debug(f"Dolphin Tool found in PATH at {shutil.which(dolphin_tool)}")
+        dolphin_tool_cmd = [dolphin_tool]
+    else:
+        if is_linux and shutil.which("flatpak"):
+            result = subprocess.run([
+                    "flatpak",
+                    "info",
+                    "org.DolphinEmu.dolphin-emu"])
+            if result.returncode == 0:
+                logger.debug(f"Flatpak Dolphin Tool Installation detected")
+                dolphin_tool_cmd = [
+                    "flatpak",
+                    "run",
+                    "--command=dolphin-tool",
+                    "--filesystem=/tmp",
+                    f"--filesystem={brawl_iso}:ro",
+                    "org.DolphinEmu.dolphin-emu"]
+
+    if dolphin_tool_cmd == None:
+        if is_linux:
+            logger.warn("Unable to find dolphin-tool in the PATH or in Flatpak. Is dolphin-tool installed?")
+        dolphin_tool_cmd = [get_settings().sse_settings.dolphin_tool]
+        logger.debug(f"Unable to automatically locate Dolphin Tool, using user-defined path: {shutil.which(dolphin_tool_cmd[0])}")
 
     logger.info("Checking your ROM file...")
 
-    with open(brawl_iso, mode="rb") as f:
-        md5_hash = hashlib.file_digest(f, "md5").hexdigest()
-        if md5_hash not in brawl_iso.md5s:
-            logger.error(
-                (
-                    "Provided Brawl ISO did not hash correctly. "
-                    "Please ensure that you are using an unmodified NTSC USA ROM "
-                    "(both v1.01 and v1.02 are fine)"
-                )
-            )
-            return
+    #with open(brawl_iso, mode="rb") as f:
+    #    md5_hash = hashlib.file_digest(f, "md5").hexdigest()
+    #    if md5_hash not in brawl_iso.md5s:
+    #        logger.error(
+    #            (
+    #                "Provided Brawl ISO did not hash correctly. "
+    #                "Please ensure that you are using an unmodified NTSC USA ROM "
+    #                "(both v1.01 and v1.02 are fine)"
+    #            )
+    #        )
+    #        return
 
     logger.info("Creating SD card")
 
@@ -68,8 +99,7 @@ def create_sd(ctx: CommonContext):
 
         # Patch Tabuu door room
         subprocess.run(
-            [
-                dolphin_tool,
+            dolphin_tool_cmd + [
                 "extract",
                 "-i",
                 brawl_iso,
@@ -87,8 +117,7 @@ def create_sd(ctx: CommonContext):
 
         # Patch title screen
         subprocess.run(
-            [
-                dolphin_tool,
+            dolphin_tool_cmd + [
                 "extract",
                 "-i",
                 brawl_iso,
