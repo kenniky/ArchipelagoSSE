@@ -1,4 +1,4 @@
-from typing import ClassVar, FrozenSet, Tuple
+from typing import ClassVar, FrozenSet
 from BaseClasses import Tutorial
 from worlds.AutoWorld import World, WebWorld
 from .Common import GAME_NAME, STICKERS
@@ -61,7 +61,7 @@ class SubspaceSettings(settings.Group):
     class BrawlIso(settings.UserFilePath):
         required = True
         description = "SSBB NTSC USA iso file"
-        md5s = ["52ce7160ced2505ad5e397477d0ea4fe", "d18726e6dfdc8bdbdad540b561051087"]
+        md5_hashes = ["52ce7160ced2505ad5e397477d0ea4fe", "d18726e6dfdc8bdbdad540b561051087"]
 
     dolphin_tool: DolphinTool = DolphinTool("DolphinTool.exe")
     brawl_iso: BrawlIso = BrawlIso("Super Smash Bros. Brawl (USA).iso")

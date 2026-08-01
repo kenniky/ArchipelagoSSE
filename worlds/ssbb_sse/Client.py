@@ -41,6 +41,8 @@ SCREEN_ID_ADDR = 0x90FF3D48
 TRIGGER_BASE_ADDR = 0x8049ED34
 TRIGGER_MANAGER_REF_ADDR = 0x80B8A698
 
+SCENE_MANAGER_REF_ADDR = 0x805A0060
+
 
 class StageDataEnum(Enum):
     AVAILABILITY = auto()
@@ -85,10 +87,10 @@ class SSECommandProcessor(ClientCommandProcessor):
             print("not connected to dolphin")
 
         seq = read_word(CURRENT_SEQUENCE_ADDR)
-        print(format(seq, "04x"))
+        logger.info(format(seq, "04x"))
 
         bytes = read_bytes(0x90FF3D40, 16)
-        print(format(bytes, "016x"))
+        logger.info(format(bytes, "016x"))
 
 
 
@@ -349,7 +351,7 @@ def in_subspace() -> bool:
 
         screen_id = read_word(SCREEN_ID_ADDR)
 
-        return screen_id > 0x06
+        return screen_id > 0x06 and screen_id < 0x1e
     except:
         return False
 
@@ -423,7 +425,7 @@ async def give_items(ctx: SSEContext) -> None:
     ctx.last_item_idx = len(ctx.items_received)
 
     # Persistent storage
-    if ctx.counter > 100 or ctx.dump_data() == original_values:
+    if ctx.counter > 100 or ctx.dump_data() != original_values:
         # Fire every 10 seconds, or if data has changed
         ctx.counter = 0
         

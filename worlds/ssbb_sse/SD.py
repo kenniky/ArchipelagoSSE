@@ -47,17 +47,18 @@ def create_sd(ctx: CommonContext):
 
     logger.info("Checking your ROM file...")
 
-    #with open(brawl_iso, mode="rb") as f:
-    #    md5_hash = hashlib.file_digest(f, "md5").hexdigest()
-    #    if md5_hash not in brawl_iso.md5s:
-    #        logger.error(
-    #            (
-    #                "Provided Brawl ISO did not hash correctly. "
-    #                "Please ensure that you are using an unmodified NTSC USA ROM "
-    #                "(both v1.01 and v1.02 are fine)"
-    #            )
-    #        )
-    #        return
+
+    with open(brawl_iso, mode="rb") as f:
+        md5_hash = hashlib.file_digest(f, "md5").hexdigest()
+        if md5_hash not in brawl_iso.md5_hashes:
+            logger.error(
+                (
+                    "Provided Brawl ISO did not hash correctly. "
+                    "Please ensure that you are using an unmodified NTSC USA ROM "
+                    "(both v1.01 and v1.02 are fine)"
+                )
+            )
+            return
 
     logger.info("Creating SD card")
 
