@@ -9,6 +9,7 @@ from CommonClient import (
 )
 from typing import Optional, Any
 import asyncio
+import time
 from enum import Enum, auto
 
 from Utils import init_logging, async_start
@@ -19,6 +20,8 @@ from .Common import GAME_NAME, STAGES, get_map_order
 from .Items import ITEM_DATA_TABLE, SSEItemType, ITEM_REVERSE_LOOKUP
 import dolphin_memory_engine
 import threading
+
+SERVERLESS_TESTING = False
 
 CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load an NTSC-USA copy of Super Smash Bros. Brawl. Trying again in 5 seconds..."
 CONNECTION_LOST_STATUS = "Dolphin connection was lost. Please restart your emulator and make sure Super Smash Bros. Brawl is running."
@@ -89,8 +92,11 @@ class SSECommandProcessor(ClientCommandProcessor):
         seq = read_word(CURRENT_SEQUENCE_ADDR)
         logger.info(format(seq, "04x"))
 
-        bytes = read_bytes(0x90FF3D40, 16)
+        bytes = read_bytes(seq, 16)
         logger.info(format(bytes, "016x"))
+
+    def _cmd_debug(self) -> None:
+        logger.info(format(get_subspace_sequence(), "04x"))
 
 
 
@@ -252,7 +258,7 @@ def write_bytes(console_address: int, hex_str: str) -> None:
     dolphin_memory_engine.write_bytes(console_address, bytes.fromhex(hex_str))
 
 
-def read_word(console_address: int) -> str:
+def read_word(console_address: int) -> int:
     """
     Read a string from Dolphin memory.
 
@@ -340,6 +346,25 @@ def get_stage_data_addr(stage: str | int, data: StageDataEnum) -> int:
         offset = STAGE_COMPLETION_OFFSET
 
     return STAGE_DATA_ADDR + stage * STAGE_SPACING + offset
+
+
+def get_subspace_sequence() -> int:
+    # kind of just copies internal logic. Not sure if there's a better way
+    scene_manager_addr = get_reference(SCENE_MANAGER_REF_ADDR)
+
+    num_scenes = read_word(scene_manager_addr + 0x274)
+
+    sequence_list = scene_manager_addr + 0x1a8
+
+    for i in range(num_scenes):
+        sequence_addr = get_reference(sequence_list + 0x4 * i)
+        sequence_name_addr = get_reference(sequence_addr)
+
+        sequence_name = read_string(sequence_name_addr, 11)
+        if sequence_name == "sqAdventure":
+            return sequence_addr
+
+    return 0x0
 
 
 def in_subspace() -> bool:
@@ -561,7 +586,7 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
         ctx.watcher_event.clear()
 
         try:
-            if ctx.slot is None:
+            if not SERVERLESS_TESTING and ctx.slot is None:
                 sleep_time = 1.0
                 continue
                 # await ctx.server_auth()
@@ -569,6 +594,9 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
                 dolphin_memory_engine.is_hooked()
                 and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
             ):
+                if SERVERLESS_TESTING:
+                    sleep_time = 10000
+                    continue
                 if not in_subspace():
                     # do nothing
                     sleep_time = 0.1
@@ -614,6 +642,17 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
             sleep_time = 5
             continue
 
+def background_updating() -> None:
+    global SEQ_SUBSPACE
+
+    while True:
+        time.sleep(10)
+
+        if not dolphin_memory_engine.is_hooked():
+            continue
+
+        SEQ_SUBSPACE = get_subspace_sequence()
+        
 
 def main(*args: str) -> None:
     init_logging("The Subspace Emissary Client")
