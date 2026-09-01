@@ -1,15 +1,16 @@
 from BaseClasses import Region
-from rule_builder.rules import Has, HasAll
+from rule_builder.rules import HasAll
 from worlds.AutoWorld import World
-from .Common import STAGES, ORANGE_CUBES, SUBSPACE_FIGHTS
+
+from .Common import ORANGE_CUBES, STAGES, SUBSPACE_FIGHTS
+from .Items import TABUU_DOOR_DATA_TABLE
 from .Locations import (
+    LOC_DATA_TABLE,
+    SSELocation,
     build_name_from_location_data,
     build_stage_unlock_name,
-    SSELocation,
-    LOC_DATA_TABLE,
 )
 from .Options import SSEOptions
-from .Items import TABUU_DOOR_DATA_TABLE, SSEItem
 
 
 class SSELevel(Region):
@@ -37,34 +38,24 @@ def create_regions(player: int, world: World, options: SSEOptions):
                 SSELocation(
                     player,
                     parent=level,
-                    data=LOC_DATA_TABLE[
-                        build_name_from_location_data(orange_cube_data)
-                    ],
+                    data=LOC_DATA_TABLE[build_name_from_location_data(orange_cube_data)],
                 )
             )
 
         # Stage clear location
         level_completion_name = build_stage_unlock_name(stage.name)
-        level_completion_location = SSELocation(
-            player, parent=level, data=LOC_DATA_TABLE[level_completion_name]
-        )
+        level_completion_location = SSELocation(player, parent=level, data=LOC_DATA_TABLE[level_completion_name])
 
         if stage.name == "The Great Maze":
-            level_completion_location.place_locked_item(
-                world.create_item("Defeat Tabuu")
-            )
-            world.set_rule(
-                level_completion_location, HasAll(*TABUU_DOOR_DATA_TABLE.keys())
-            )
+            level_completion_location.place_locked_item(world.create_item("Defeat Tabuu"))
+            world.set_rule(level_completion_location, HasAll(*TABUU_DOOR_DATA_TABLE.keys()))
 
             for subspace_fight_data in SUBSPACE_FIGHTS:
                 level.locations.append(
                     SSELocation(
                         player,
                         parent=level,
-                        data=LOC_DATA_TABLE[
-                            build_name_from_location_data(subspace_fight_data)
-                        ],
+                        data=LOC_DATA_TABLE[build_name_from_location_data(subspace_fight_data)],
                     )
                 )
 

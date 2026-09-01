@@ -1,14 +1,16 @@
 import hashlib
-
 import importlib
-from settings import get_settings
 import subprocess
-from pathlib import Path
-from CommonClient import CommonContext, logger
 import tempfile
+from pathlib import Path
+
 import bsdiff4
 
+from CommonClient import CommonContext, logger
+from settings import get_settings
+
 SDCARD_ANCHOR = "worlds.ssbb_sse.sdcard"
+
 
 def create_sd(ctx: CommonContext):
     dolphin_tool = get_settings().sse_settings.dolphin_tool
@@ -20,11 +22,9 @@ def create_sd(ctx: CommonContext):
         md5_hash = hashlib.file_digest(f, "md5").hexdigest()
         if md5_hash not in brawl_iso.md5_hashes:
             logger.error(
-                (
-                    "Provided Brawl ISO did not hash correctly. "
-                    "Please ensure that you are using an unmodified NTSC USA ROM "
-                    "(both v1.01 and v1.02 are fine)"
-                )
+                "Provided Brawl ISO did not hash correctly. "
+                "Please ensure that you are using an unmodified NTSC USA ROM "
+                "(both v1.01 and v1.02 are fine)"
             )
             return
 
@@ -35,11 +35,7 @@ def create_sd(ctx: CommonContext):
     try:
         sd_dir.mkdir()
     except FileExistsError:
-        logger.error(
-            "SD card directory "
-            + str(sd_dir)
-            + " already exists - please remove it first"
-        )
+        logger.error("SD card directory " + str(sd_dir) + " already exists - please remove it first")
         return
 
     logger.info("Created SD card folder")
@@ -78,7 +74,8 @@ def create_sd(ctx: CommonContext):
                 "-o",
                 temp_dir,
                 "-q",
-            ]
+            ],
+            check=True,
         )
         pac_420037a_o = temp_dir / "DATA/files/stage/adventure/420037a.pac"
         pac_420037a = adventure_pac_folder / "420037a.pac"
@@ -97,7 +94,8 @@ def create_sd(ctx: CommonContext):
                 "-o",
                 temp_dir,
                 "-q",
-            ]
+            ],
+            check=True,
         )
         sc_title_o = temp_dir / "DATA/files/menu2/sc_title_en.pac"
         sc_title = menu2_folder / "sc_title.pac"
@@ -106,6 +104,7 @@ def create_sd(ctx: CommonContext):
 
     logger.info("Created SD card directory at " + str(sd_dir))
     logger.info("Please use Dolphin to convert the directory into a usable SD card!")
+
 
 def patch_file(origin_file, patch_path, target_file=None):
     with tempfile.TemporaryDirectory() as tmpdirname:

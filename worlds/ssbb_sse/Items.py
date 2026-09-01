@@ -1,6 +1,9 @@
-from BaseClasses import Item, ItemClassification as IC
 from enum import Enum, auto
-from typing import Dict, NamedTuple, Optional, Set
+from typing import NamedTuple
+
+from BaseClasses import Item
+from BaseClasses import ItemClassification as IC  # noqa: N817
+
 from .Common import GAME_NAME, STAGES, STICKERS, SUBSPACE_FIGHTS, StickerData
 
 
@@ -13,9 +16,9 @@ class SSEItemType(Enum):
 
 class SSEItemData(NamedTuple):
     classification: IC
-    code: Optional[int] = None
-    type: Optional[SSEItemType] = None
-    other_info: dict = {}
+    code: int | None = None
+    type: SSEItemType | None = None
+    other_info: dict | None = None
 
 
 class SSEItem(Item):
@@ -26,7 +29,7 @@ class SSEItem(Item):
         name: str,
         player: int,
         data: SSEItemData,
-        classification: Optional[IC] = None,
+        classification: IC | None = None,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -45,20 +48,12 @@ def populate_items(subspace_world):
 
     # Determine unique items first
 
-    item_pool += [
-        subspace_world.create_item(level_unlock)
-        for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()
-    ]
+    item_pool += [subspace_world.create_item(level_unlock) for level_unlock in STAGE_UNLOCK_DATA_TABLE.keys()]
 
-    item_pool += [
-        subspace_world.create_item(tabuu_door_unlock)
-        for tabuu_door_unlock in TABUU_DOOR_DATA_TABLE.keys()
-    ]
+    item_pool += [subspace_world.create_item(tabuu_door_unlock) for tabuu_door_unlock in TABUU_DOOR_DATA_TABLE.keys()]
 
     # Start with Midair Stadium
-    subspace_world.push_precollected(
-        subspace_world.create_item(STAGE_UNLOCK_PREFIX + "Midair Stadium")
-    )
+    subspace_world.push_precollected(subspace_world.create_item(STAGE_UNLOCK_PREFIX + "Midair Stadium"))
 
     # Remove unique items that are precollected
     for item in subspace_world.multiworld.precollected_items[player]:
@@ -71,15 +66,13 @@ def populate_items(subspace_world):
     needed_items = total_locs - created_items
 
     for _ in range(needed_items):
-        item_pool.append(
-            subspace_world.create_item(subspace_world.get_filler_item_name())
-        )
+        item_pool.append(subspace_world.create_item(subspace_world.get_filler_item_name()))
 
     subspace_world.multiworld.itempool.extend(item_pool)
 
 
 def populate_item_groups(subspace_world):
-    item_group_dict: Dict[str, Set[str]] = {}
+    item_group_dict: dict[str, set[str]] = {}
 
     item_group_dict["Stage Unlocks"] = STAGE_UNLOCK_DATA_TABLE.keys()
 
@@ -99,8 +92,7 @@ STICKER_OFFSET = 1000
 STAGE_UNLOCK_PREFIX = "Stage Unlock - "
 
 STAGE_UNLOCK_DATA_TABLE: dict[str, SSEItemData] = {
-    STAGE_UNLOCK_PREFIX
-    + data.name: SSEItemData(
+    STAGE_UNLOCK_PREFIX + data.name: SSEItemData(
         classification=IC.progression,
         code=STAGE_UNLOCK_OFFSET + data.map_order,
         type=SSEItemType.STAGE_UNLOCK,
@@ -122,8 +114,7 @@ STICKER_DATA_TABLE: dict[str, SSEItemData] = {
 }
 
 TABUU_DOOR_DATA_TABLE: dict[str, SSEItemData] = {
-    "Tabuu Door Trophy Unlock - "
-    + data.fight: SSEItemData(
+    "Tabuu Door Trophy Unlock - " + data.fight: SSEItemData(
         classification=IC.progression_skip_balancing,
         code=TABUU_DOOR + idx,
         type=SSEItemType.TABUU_DOOR,
@@ -132,14 +123,10 @@ TABUU_DOOR_DATA_TABLE: dict[str, SSEItemData] = {
     for idx, data in enumerate(SUBSPACE_FIGHTS)
 }
 
-MISC_DATA_TABLE: dict[str, SSEItemData] = {
-    "Filler Placeholder": SSEItemData(IC.filler, MISC_OFFSET + 0)
-}
+MISC_DATA_TABLE: dict[str, SSEItemData] = {"Filler Placeholder": SSEItemData(IC.filler, MISC_OFFSET + 0)}
 
 # Events, ids should be none
-EVENT_DATA_TABLE: dict[str, SSEItemData] = {
-    "Defeat Tabuu": SSEItemData(IC.progression, None)
-}
+EVENT_DATA_TABLE: dict[str, SSEItemData] = {"Defeat Tabuu": SSEItemData(IC.progression, None)}
 
 ITEM_DATA_TABLE = {
     **STAGE_UNLOCK_DATA_TABLE,
@@ -152,6 +139,4 @@ ITEM_DATA_TABLE = {
 
 ITEM_TABLE: dict[str, int] = {name: data.code for name, data in ITEM_DATA_TABLE.items()}
 
-ITEM_REVERSE_LOOKUP: dict[int, str] = {
-    code: name for name, code in ITEM_TABLE.items() if code is not None
-}
+ITEM_REVERSE_LOOKUP: dict[int, str] = {code: name for name, code in ITEM_TABLE.items() if code is not None}

@@ -202,3 +202,4 @@ Thumbs.db
 dev_notes/
 worlds/*.zip
 worlds/*.apworld
+sse_debug_*.txt

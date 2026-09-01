@@ -1,16 +1,16 @@
-from typing import Dict, Optional, Set, overload
 from dataclasses import dataclass, field
-from BaseClasses import Location, Region
 from enum import Enum, auto
+
+from BaseClasses import Location, Region
 
 from .Common import (
     GAME_NAME,
-    STAGES,
     ORANGE_CUBES,
+    STAGES,
+    SUBSPACE_FIGHTS,
     OrangeCubeData,
     StageData,
     SubspaceFightData,
-    SUBSPACE_FIGHTS,
 )
 
 
@@ -30,10 +30,10 @@ class LocationType(Enum):
 
 @dataclass
 class SSELocationData:
-    name: Optional[str] = None
-    code: Optional[int] = None
+    name: str | None = None
+    code: int | None = None
 
-    location_type: Optional[LocationType] = None
+    location_type: LocationType | None = None
 
     active: bool = True
 
@@ -43,15 +43,15 @@ class SSELocationData:
 class SSELocation(Location):
     game: str = GAME_NAME
 
-    data: Optional[SSELocationData]
+    data: SSELocationData | None
 
     # make init like the parent, and make a class method
 
     def __init__(
         self,
         player: int,
-        parent: Optional[Region] = None,
-        data: Optional[SSELocationData] = None,
+        parent: Region | None = None,
+        data: SSELocationData | None = None,
     ):
         assert data is not None, "location is missing data!"
 
@@ -61,7 +61,7 @@ class SSELocation(Location):
 
 
 def define_location_groups(subspace_world):
-    location_group_dict: Dict[str, Set[str]] = {}
+    location_group_dict: dict[str, set[str]] = {}
 
     location_group_dict["Stage Completions"] = STAGE_COMPLETION_LOC_DATA.keys()
 
@@ -102,11 +102,7 @@ SUBSPACE_FIGHT_COMPLETION_OFFSET = 300
 STAGE_COMPLETION_LOC_DATA: dict[str, SSELocationData] = {
     build_name_from_location_data(stage): SSELocationData(
         name=build_name_from_location_data(stage),
-        code=(
-            None
-            if stage.name == "The Great Maze"
-            else stage.map_order + STAGE_COMPLETION_OFFSET
-        ),
+        code=(None if stage.name == "The Great Maze" else stage.map_order + STAGE_COMPLETION_OFFSET),
         location_type=LocationType.STAGE_COMPLETION,
         other_info={"map_order": stage.map_order},
     )
