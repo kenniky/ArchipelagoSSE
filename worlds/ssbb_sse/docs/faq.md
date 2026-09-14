@@ -10,6 +10,10 @@ Yes, the build is currently mostly stable, just very barebones. Due to the natur
 
 [See here](./en_SubspaceEmissary.md#what-gets-randomized)
 
+### Is there character randomization?
+
+No, not yet.
+
 ### Where should I go to start playing?
 
 When you've opened Brawl, navigate to the Subspace Emissary and create a new save file. Opening an existing save file will immediately send all the checks that that save file has completed... which I assume is not what you want.
