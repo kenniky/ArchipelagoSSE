@@ -8,13 +8,13 @@ from worlds.LauncherComponents import Component, Type, components, launch
 from .Common import GAME_NAME, STICKERS
 from .Items import (
     ITEM_DATA_TABLE,
+    ITEM_GROUPS,
     ITEM_TABLE,
     SSEItem,
     build_sticker_name,
-    populate_item_groups,
     populate_items,
 )
-from .Locations import LOCATION_TABLE
+from .Locations import LOCATION_GROUPS, LOCATION_TABLE
 from .Options import SSEOptions
 from .Regions import create_regions
 from .Rules import set_rules
@@ -81,6 +81,9 @@ class SubspaceWorld(World):
     item_name_to_id: ClassVar[dict[str, int]] = ITEM_TABLE
     location_name_to_id: ClassVar[dict[str, int]] = LOCATION_TABLE
 
+    item_name_groups: ClassVar[dict[str, set[str]]] = ITEM_GROUPS
+    location_name_groups: ClassVar[dict[str, set[str]]] = LOCATION_GROUPS
+
     origin_region_name: ClassVar[str] = "Stage Select"
     hint_blacklist: ClassVar[frozenset[str]] = frozenset(["Filler Placeholder"])
 
@@ -89,8 +92,6 @@ class SubspaceWorld(World):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        populate_item_groups(self)
 
     def generate_early(self) -> None:
         # placeholder

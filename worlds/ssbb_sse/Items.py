@@ -71,14 +71,6 @@ def populate_items(subspace_world):
     subspace_world.multiworld.itempool.extend(item_pool)
 
 
-def populate_item_groups(subspace_world):
-    item_group_dict: dict[str, set[str]] = {}
-
-    item_group_dict["Stage Unlocks"] = STAGE_UNLOCK_DATA_TABLE.keys()
-
-    subspace_world.item_name_groups = item_group_dict
-
-
 def build_sticker_name(sticker_data: StickerData):
     return f"{sticker_data.name} ({sticker_data.series}) Sticker"
 
@@ -138,5 +130,11 @@ ITEM_DATA_TABLE = {
 }
 
 ITEM_TABLE: dict[str, int] = {name: data.code for name, data in ITEM_DATA_TABLE.items()}
+
+ITEM_GROUPS: dict[str, set[str]] = {
+    "Stage Unlocks": set(STAGE_UNLOCK_DATA_TABLE.keys()),
+    "Tabuu Door Unlocks": set(TABUU_DOOR_DATA_TABLE.keys()),
+    "Stickers": set(STICKER_DATA_TABLE.keys())
+}
 
 ITEM_REVERSE_LOOKUP: dict[int, str] = {code: name for name, code in ITEM_TABLE.items() if code is not None}

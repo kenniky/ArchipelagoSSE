@@ -136,3 +136,9 @@ LOC_DATA_TABLE = {
 }
 
 LOCATION_TABLE = {key: val.code for key, val in LOC_DATA_TABLE.items()}
+
+LOCATION_GROUPS: dict[str, set[str]] = {
+    "Stage Completions": set(STAGE_COMPLETION_LOC_DATA.keys()),
+    "Orange Cubes": set(ORANGE_CUBE_LOC_DATA.keys()),
+    "Subspace Shadow Fights": set(SUBSPACE_FIGHT_LOC_DATA.keys())
+}

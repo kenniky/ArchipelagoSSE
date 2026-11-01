@@ -56,6 +56,8 @@ TRIGGER_MANAGER_REF_ADDR = 0x80B8A698
 SCENE_MANAGER_REF_ADDR = 0x805A0060
 
 debug_output = False
+debug_counter = 0
+DEBUG_INTERVAL = 20
 
 
 class StageDataEnum(Enum):
@@ -215,9 +217,7 @@ class SSEContext(CommonContext):
             if self.last_item_idx is None:
                 self.last_item_idx = 0
         elif cmd == "ReceivedItems":
-            if debug_output:
-                logger.debug(args)
-            pass
+            log_if_debug(args)
 
     async def server_auth(self, password_requested: bool = False):
         # logger.info('authing')
@@ -262,11 +262,31 @@ class SSEContext(CommonContext):
         }
 
 
+def log_if_debug(message: str) -> None:
+    if debug_output:
+        logger.debug(message)
+
+
+def log_if_debug_counter(message: str) -> None:
+    if debug_output and debug_counter > DEBUG_INTERVAL:
+        logger.debug(message)
+
+
+def update_debug_counter() -> None:
+    if debug_counter > DEBUG_INTERVAL:
+        debug_counter = 0
+    debug_counter += 1
+
+
 def get_reference(reference: int):
     return read_word(reference)
 
 
-def bit_mask(bit_num: int):
+def word_to_hex(data: int) -> str:
+    return f"{data:08x}"
+
+
+def bit_mask(bit_num: int) -> int:
     # 1 indexed
     return 0b1 << (8 - bit_num)
 
@@ -346,6 +366,8 @@ def read_global_trigger(trigger_id: int) -> bool:
     bit_offset = trigger_id % 32
 
     word = read_word(get_reference(TRIGGER_BASE_ADDR) + WORD_SIZE * word_offset)
+    log_if_debug_counter(f"reading trigger {trigger_id}: word {word_to_hex(word)} with offset {bit_offset}")
+
     bit_mask = 1 << bit_offset
     return word & bit_mask != 0
 
@@ -363,15 +385,12 @@ async def set_global_trigger(trigger_id: int):
     new_word = word | bit_mask
 
     if new_word != word:
-        if debug_output:
-            logger.debug(
-                f"setting trigger {trigger_id} at address {trigger_addr:08x}, changed from {word:08x} to {new_word:08x}"
-            )
-
-        write_bytes(
-            trigger_addr,
-            format(new_word, "08x"),
+        log_if_debug(
+            f"setting trigger {trigger_id} at address {word_to_hex(trigger_addr)}, "
+            f"changed from {word_to_hex(word)} to {word_to_hex(new_word)}"
         )
+
+        write_bytes(trigger_addr, format(new_word, "08x"))
 
     # set in trigger manager
     curr_screen = read_word(SCREEN_ID_ADDR)
@@ -404,8 +423,11 @@ def get_stage_data_addr(stage: str | int, data: StageDataEnum) -> int:
 
 
 def get_subspace_sequence() -> int:
+    log_if_debug("get_subspace_sequence")
+
     # kind of just copies internal logic. Not sure if there's a better way
     scene_manager_addr = get_reference(SCENE_MANAGER_REF_ADDR)
+    log_if_debug(f"-- scene manager address: {word_to_hex(scene_manager_addr)}")
 
     num_scenes = read_word(scene_manager_addr + 0x274)
 
@@ -416,6 +438,10 @@ def get_subspace_sequence() -> int:
         sequence_name_addr = get_reference(sequence_addr)
 
         sequence_name = read_string(sequence_name_addr, 11)
+        log_if_debug(
+            f"-- scene {i}: sequence_addr {word_to_hex(sequence_addr)} "
+            f"sequence_name_addr {word_to_hex(sequence_name_addr)} sequence_name {sequence_name}"
+        )
         if sequence_name == "sqAdventure":
             return sequence_addr
 
@@ -426,16 +452,20 @@ def in_subspace() -> bool:
     try:
         curr_seq = read_word(CURRENT_SEQUENCE_ADDR)
 
+        log_if_debug_counter(f"curr_seq {word_to_hex(curr_seq)} vs SEQ_SUBSPACE {word_to_hex(SEQ_SUBSPACE)}")
+
         if curr_seq != SEQ_SUBSPACE:
             return False
 
         screen_id = read_word(SCREEN_ID_ADDR)
 
+        log_if_debug_counter(f"screen_id {word_to_hex(screen_id)}")
+        update_debug_counter()
+
         return screen_id > 0x06 and screen_id < 0x1E
     except Exception as e:
-        if debug_output:
-            logger.debug("failed to check if in subspace")
-            logger.debug(str(e))
+        log_if_debug("failed to check if in subspace")
+        log_if_debug(str(e))
         return False
 
 
@@ -444,12 +474,14 @@ async def check_locations(ctx: SSEContext) -> None:
         return
 
     for loc in LOC_DATA_TABLE.values():
+        log_if_debug_counter(f"checking location {loc}")
         checked = False
 
         if loc.location_type == LocationType.STAGE_COMPLETION:
             completion_status = read_word(
                 get_stage_data_addr(loc.other_info["map_order"], StageDataEnum.STATUS),
             )
+            log_if_debug_counter(f"completion status: {word_to_hex(completion_status)}")
             if completion_status in (0x0003, 0x0004):
                 checked = True
 
@@ -467,6 +499,8 @@ async def check_locations(ctx: SSEContext) -> None:
             if loc.code is not None:
                 ctx.locations_checked.add(loc.code)
 
+    update_debug_counter()
+
     locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
     if locations_checked:
         await ctx.send_msgs([{"cmd": "LocationChecks", "locations": locations_checked}])
@@ -476,8 +510,7 @@ async def give_items(ctx: SSEContext) -> None:
     ctx.counter += 1
 
     if ctx.last_item_idx is None:
-        if debug_output:
-            logger.debug("last item idx got set to None")
+        log_if_debug("last item idx got set to None")
         ctx.last_item_idx = 0
 
     original_values = ctx.dump_data()
@@ -486,8 +519,8 @@ async def give_items(ctx: SSEContext) -> None:
         item_data = ITEM_DATA_TABLE[ITEM_REVERSE_LOOKUP[item.item]]
 
         if item_data.type == SSEItemType.STAGE_UNLOCK:
-            if debug_output and item_data.other_info["map_order"] not in ctx.unlocked_stages:
-                logger.debug(f"unlocking stage {item_data.other_info['map_order']}: {item_data.other_info['name']}")
+            if item_data.other_info["map_order"] not in ctx.unlocked_stages:
+                log_if_debug(f"unlocking stage {item_data.other_info['map_order']}: {item_data.other_info['name']}")
             ctx.unlocked_stages.add(item_data.other_info["map_order"])
 
         if item_data.type == SSEItemType.STICKER:
@@ -495,8 +528,7 @@ async def give_items(ctx: SSEContext) -> None:
             if idx < ctx.last_item_idx:
                 continue
 
-            if debug_output:
-                logger.debug(f"sending sticker {item_data.other_info['byte']}")
+            log_if_debug(f"sending sticker {item_data.other_info['byte']}")
             byte_addr = int(item_data.other_info["byte"], 16)
             curr_value = read_bytes(byte_addr, 2)
 
@@ -507,13 +539,13 @@ async def give_items(ctx: SSEContext) -> None:
 
         if item_data.type == SSEItemType.TABUU_DOOR:
             # print(f"received door item {item_data}")
-            if debug_output and item_data.other_info["trigger_id"] not in ctx.found_triggers:
-                logger.debug(f"setting tabuu door id {item_data.other_info['trigger_id']}")
+            if item_data.other_info["trigger_id"] not in ctx.found_triggers:
+                log_if_debug(f"setting tabuu door id {item_data.other_info['trigger_id']}")
             ctx.found_triggers.add(item_data.other_info["trigger_id"])
 
             if len(ctx.found_triggers) >= ctx.slot_data.get("tabuu_trophies_needed", 100) / 100 * len(SUBSPACE_FIGHTS):
-                if debug_output and len(ctx.found_triggers) < len(SUBSPACE_FIGHTS):
-                    logger.debug("passed threshold, setting all tabuu doors")
+                if len(ctx.found_triggers) < len(SUBSPACE_FIGHTS):
+                    log_if_debug("passed threshold, setting all tabuu doors")
                 for fight_data in SUBSPACE_FIGHTS:
                     ctx.found_triggers.add(fight_data.item_trigger_id)
 
@@ -645,8 +677,11 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
         if sleep_time > 0.0:
             try:
                 # ctx.watcher_event gets set when receiving ReceivedItems or LocationInfo, or when shutting down.
+                log_if_debug(f"Watching for {sleep_time}")
                 await asyncio.wait_for(ctx.watcher_event.wait(), sleep_time)
+                log_if_debug("Watch successful")
             except TimeoutError:
+                log_if_debug("nothing happened")
                 pass
             sleep_time = 0.0
         ctx.watcher_event.clear()
@@ -654,6 +689,7 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
         try:
             if not SERVERLESS_TESTING and ctx.slot is None:
                 sleep_time = 1.0
+                log_if_debug("Not connected")
                 continue
                 # await ctx.server_auth()
             if dolphin_memory_engine.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
@@ -663,6 +699,8 @@ async def dolphin_sync_task(ctx: SSEContext) -> None:
                 if not in_subspace():
                     # do nothing
                     sleep_time = 0.1
+                    log_if_debug_counter("Not in subspace")
+                    update_debug_counter()
                     continue
                 if ctx.slot is not None:
                     # connected to the server
@@ -714,8 +752,7 @@ def background_updating() -> None:
         new_sequence = get_subspace_sequence()
 
         if SEQ_SUBSPACE != new_sequence:
-            if debug_output:
-                logger.debug(f"updating subspace sequence from {SEQ_SUBSPACE:08x} to {new_sequence:08x}")
+            log_if_debug(f"updating subspace sequence from {word_to_hex(SEQ_SUBSPACE)} to {word_to_hex(new_sequence)}")
 
             SEQ_SUBSPACE = new_sequence
 
