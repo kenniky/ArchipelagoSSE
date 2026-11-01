@@ -29,10 +29,6 @@ No, due to Archipelago distribution rules PM and other content mods are not supp
 
 When you've opened Brawl, navigate to the Subspace Emissary and create a new save file. Opening an existing save file will immediately send all the checks that that save file has completed... which I assume is not what you want.
 
-### I started in the Mario vs Kirby fight instead of the map, is that correct?
-
-Yes, that is currently how the game starts.
-
 ### I picked up an orange cube, but I'm not getting a check for it!
 
 At the moment, orange cube checks are granted when you leave the room that the cube was in.
