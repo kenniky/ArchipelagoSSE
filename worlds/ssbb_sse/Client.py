@@ -168,6 +168,7 @@ class SSEContext(CommonContext):
         self.dolphin_sync_task: asyncio.Task[None] | None = None
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
         self.awaiting_rom: bool = False
+        self.slot_data = {}
 
         self.last_item_idx: int = 0
 
@@ -273,6 +274,7 @@ def log_if_debug_counter(message: str) -> None:
 
 
 def update_debug_counter() -> None:
+    global debug_counter
     if debug_counter > DEBUG_INTERVAL:
         debug_counter = 0
     debug_counter += 1
