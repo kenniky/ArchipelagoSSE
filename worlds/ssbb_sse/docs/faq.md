@@ -14,7 +14,7 @@ Yes, the build is currently mostly stable, just very barebones. Due to the natur
 
 This is probably an issue with Dolphin memory engine, which has historically been hard to debug. Some notes:
 
-- Dolphin memory engine does **not** work on Mac, and as such this AP implementation is not compatible with Mac.
+- Dolphin memory engine requires some additional configuration on Mac. See [the dolphin-memory-engine repo](https://github.com/aldelaro5/dolphin-memory-engine#macos-code-signing) for more details and instructions.
 - Linux distributions have varying degrees of success, installing Dolphin via flatpak has been found to be the most consistent
 
 ### Is there character randomization?

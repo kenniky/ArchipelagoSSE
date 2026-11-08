@@ -67,6 +67,10 @@ The mod for the Subspace Emissary APWorld uses the same loading method as most B
 
     ![](images/titlescreen.png)
 
+# Additional Mac setup
+
+Dolphin memory engine needs some extra permissions to run on Mac. Follow the instructions [here](https://github.com/aldelaro5/dolphin-memory-engine#macos-code-signing) to let Dolphin with Archipelago work
+
 # Questions / Bugs
 
 Refer to the [FAQ](./faq.md), or ask in the thread on the Discord server.
